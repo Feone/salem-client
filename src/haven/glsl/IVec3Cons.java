@@ -27,30 +27,30 @@
 package haven.glsl;
 
 public class IVec3Cons extends Expression {
-    public static final IVec3Cons z = new IVec3Cons(IntLiteral.z, IntLiteral.z, IntLiteral.z);
-    public static final IVec3Cons u = new IVec3Cons(IntLiteral.u, IntLiteral.u, IntLiteral.u);
-    public final Expression[] els;
+	public static final IVec3Cons z = new IVec3Cons(IntLiteral.z, IntLiteral.z, IntLiteral.z);
+	public static final IVec3Cons u = new IVec3Cons(IntLiteral.u, IntLiteral.u, IntLiteral.u);
+	public final Expression[] els;
 
-    public IVec3Cons(Expression... els) {
-	if((els.length < 1) || (els.length > 3))
-	    throw(new RuntimeException("Invalid number of arguments for ivec3: " + els.length));
-	this.els = els;
-    }
-
-    public IVec3Cons process(Context ctx) {
-	Expression[] nels = new Expression[els.length];
-	for(int i = 0; i < els.length; i++)
-	    nels[i] = els[i].process(ctx);
-	return(new IVec3Cons(nels));
-    }
-
-    public void output(Output out) {
-	out.write("ivec3(");
-	els[0].output(out);
-	for(int i = 1; i < els.length; i++) {
-	    out.write(", ");
-	    els[i].output(out);
+	public IVec3Cons(Expression... els) {
+		if ((els.length < 1) || (els.length > 3))
+			throw (new RuntimeException("Invalid number of arguments for ivec3: " + els.length));
+		this.els = els;
 	}
-	out.write(")");
-    }
+
+	public IVec3Cons process(Context ctx) {
+		Expression[] nels = new Expression[els.length];
+		for (int i = 0; i < els.length; i++)
+			nels[i] = els[i].process(ctx);
+		return (new IVec3Cons(nels));
+	}
+
+	public void output(Output out) {
+		out.write("ivec3(");
+		els[0].output(out);
+		for (int i = 1; i < els.length; i++) {
+			out.write(", ");
+			els[i].output(out);
+		}
+		out.write(")");
+	}
 }

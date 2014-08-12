@@ -27,19 +27,21 @@
 package haven;
 
 public abstract class ListWidget<T> extends Widget {
-    public final int itemh;
-    public T sel;
+	public final int itemh;
+	public T sel;
 
-    public ListWidget(Coord c, Coord sz, Widget parent, int itemh) {
-	super(c, sz, parent);
-	this.itemh = itemh;
-    }
+	public ListWidget(Coord c, Coord sz, Widget parent, int itemh) {
+		super(c, sz, parent);
+		this.itemh = itemh;
+	}
 
-    protected abstract T listitem(int i);
-    protected abstract int listitems();
-    protected abstract void drawitem(GOut g, T item);
+	protected abstract T listitem(int i);
 
-    public void change(T item) {
-	this.sel = item;
-    }
+	protected abstract int listitems();
+
+	protected abstract void drawitem(GOut g, T item);
+
+	public void change(T item) {
+		this.sel = item;
+	}
 }

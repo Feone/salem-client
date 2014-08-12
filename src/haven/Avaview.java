@@ -30,96 +30,95 @@ import java.awt.Color;
 import java.util.*;
 
 public class Avaview extends PView {
-    public static final Tex missing = Resource.loadtex("gfx/hud/equip/missing");
-    public static final Coord dasz = missing.sz();
-    public long avagob;
-    private Composited comp;
-    private List<Composited.MD> cmod = null;
-    private List<Composited.ED> cequ = null;
-    private final String camnm;
-	
-    public Avaview(Coord c, Coord sz, Widget parent, long avagob, String camnm) {
-	super(c, sz, parent);
-	this.camnm = camnm;
-	this.avagob = avagob;
-    }
-    
-    private boolean missed = false;
-    private Camera cam = null;
+	public static final Tex missing = Resource.loadtex("gfx/hud/equip/missing");
+	public static final Coord dasz = missing.sz();
+	public long avagob;
+	private Composited comp;
+	private List<Composited.MD> cmod = null;
+	private List<Composited.ED> cequ = null;
+	private final String camnm;
 
-    private Composite getgcomp() {
-	Gob gob = ui.sess.glob.oc.getgob(avagob);
-	if(gob == null)
-	    return(null);
-	Drawable d = gob.getattr(Drawable.class);
-	if(!(d instanceof Composite))
-	    return(null);
-	Composite gc = (Composite)d;
-	if(gc.comp == null)
-	    return(null);
-	return(gc);
-    }
-
-    private void initcomp(Composite gc) {
-	if((comp == null) || (comp.skel != gc.comp.skel))
-	    comp = new Composited(gc.comp.skel);
-    }
-
-    private Camera makecam(Composite gc, String camnm) {
-	if(comp == null)
-	    throw(new Loading());
-	Skeleton.BoneOffset bo = gc.base.get().layer(Skeleton.BoneOffset.class, camnm);
-	if(bo == null)
-	    throw(new Loading());
-	GLState.Buffer buf = new GLState.Buffer(null);
-	bo.forpose(comp.pose).prep(buf);
-	return(new LocationCam(buf.get(PView.loc)));
-    }
-
-    private Composite lgc = null;
-    protected Camera camera() {
-	Composite gc = getgcomp();
-	if(gc == null)
-	    throw(new Loading());
-	initcomp(gc);
-	if((cam == null) || (gc != lgc))
-	    cam = makecam(lgc = gc, camnm);
-	return(cam);
-    }
-
-    protected void setup(RenderList rl) {
-	Composite gc = getgcomp();
-	if(gc == null) {
-	    missed = true;
-	    return;
+	public Avaview(Coord c, Coord sz, Widget parent, long avagob, String camnm) {
+		super(c, sz, parent);
+		this.camnm = camnm;
+		this.avagob = avagob;
 	}
-	initcomp(gc);
-	if(gc.comp.cmod != this.cmod)
-	    comp.chmod(this.cmod = gc.comp.cmod);
-	if(gc.comp.cequ != this.cequ)
-	    comp.chequ(this.cequ = gc.comp.cequ);
-	rl.add(comp, null);
-	rl.add(new DirLight(Color.WHITE, Color.WHITE, Color.WHITE, new Coord3f(1, 1, 1).norm()), null);
-    }
-    
-    public void tick(double dt) {
-	if(comp != null)
-	    comp.tick((int)(dt * 1000));
-    }
 
-    public void draw(GOut g) {
-	/*
-	g.chcolor(Color.BLACK);
-	g.frect(Coord.z, sz);
-	g.chcolor();
-	*/
-	missed = false;
-	try {
-	    super.draw(g);
-	} catch(Loading e) {
-	    missed = true;
+	private boolean missed = false;
+	private Camera cam = null;
+
+	private Composite getgcomp() {
+		Gob gob = ui.sess.glob.oc.getgob(avagob);
+		if (gob == null)
+			return (null);
+		Drawable d = gob.getattr(Drawable.class);
+		if (!(d instanceof Composite))
+			return (null);
+		Composite gc = (Composite) d;
+		if (gc.comp == null)
+			return (null);
+		return (gc);
 	}
-	if(missed)
-	    g.image(missing, Coord.z, sz);
-    }
+
+	private void initcomp(Composite gc) {
+		if ((comp == null) || (comp.skel != gc.comp.skel))
+			comp = new Composited(gc.comp.skel);
+	}
+
+	private Camera makecam(Composite gc, String camnm) {
+		if (comp == null)
+			throw (new Loading());
+		Skeleton.BoneOffset bo = gc.base.get().layer(Skeleton.BoneOffset.class, camnm);
+		if (bo == null)
+			throw (new Loading());
+		GLState.Buffer buf = new GLState.Buffer(null);
+		bo.forpose(comp.pose).prep(buf);
+		return (new LocationCam(buf.get(PView.loc)));
+	}
+
+	private Composite lgc = null;
+
+	protected Camera camera() {
+		Composite gc = getgcomp();
+		if (gc == null)
+			throw (new Loading());
+		initcomp(gc);
+		if ((cam == null) || (gc != lgc))
+			cam = makecam(lgc = gc, camnm);
+		return (cam);
+	}
+
+	protected void setup(RenderList rl) {
+		Composite gc = getgcomp();
+		if (gc == null) {
+			missed = true;
+			return;
+		}
+		initcomp(gc);
+		if (gc.comp.cmod != this.cmod)
+			comp.chmod(this.cmod = gc.comp.cmod);
+		if (gc.comp.cequ != this.cequ)
+			comp.chequ(this.cequ = gc.comp.cequ);
+		rl.add(comp, null);
+		rl.add(new DirLight(Color.WHITE, Color.WHITE, Color.WHITE, new Coord3f(1, 1, 1).norm()), null);
+	}
+
+	public void tick(double dt) {
+		if (comp != null)
+			comp.tick((int) (dt * 1000));
+	}
+
+	public void draw(GOut g) {
+		/*
+		 * g.chcolor(Color.BLACK); g.frect(Coord.z, sz); g.chcolor();
+		 */
+		missed = false;
+		try {
+			super.draw(g);
+		} catch (Loading e) {
+			missed = true;
+		}
+		if (missed)
+			g.image(missing, Coord.z, sz);
+	}
 }

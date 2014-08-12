@@ -29,17 +29,17 @@ package haven;
 import javax.media.opengl.*;
 
 public class GLVertexArray extends GLObject {
-    public final int id;
-    
-    public GLVertexArray(GL2 gl) {
-	super(gl);
-	int[] buf = new int[1];
-	gl.glGenVertexArrays(1, buf, 0);
-	this.id = buf[0];
-    }
-    
-    protected void delete() {
-	int[] buf = {id};
-	gl.glDeleteVertexArrays(1, buf, 0);
-    }
+	public final int id;
+
+	public GLVertexArray(GL2 gl) {
+		super(gl);
+		int[] buf = new int[1];
+		gl.glGenVertexArrays(1, buf, 0);
+		this.id = buf[0];
+	}
+
+	protected void delete() {
+		int[] buf = { id };
+		gl.glDeleteVertexArrays(1, buf, 0);
+	}
 }

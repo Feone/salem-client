@@ -30,201 +30,210 @@ import java.util.*;
 import java.awt.font.TextAttribute;
 
 public class OptWnd extends Window {
-    public final Panel main;
-    public Panel current;
+	public final Panel main;
+	public Panel current;
 
-    public void chpanel(Panel p) {
-	if(current != null)
-	    current.hide();
-	(current = p).show();
-	pack();
-    }
-
-    public class PButton extends Button {
-	public final Panel tgt;
-	public final int key;
-
-	public PButton(Coord c, int w, Widget parent, String title, int key, Panel tgt) {
-	    super(c, w, parent, title);
-	    this.tgt = tgt;
-	    this.key = key;
+	public void chpanel(Panel p) {
+		if (current != null)
+			current.hide();
+		(current = p).show();
+		pack();
 	}
 
-	public void click() {
-	    chpanel(tgt);
-	}
+	public class PButton extends Button {
+		public final Panel tgt;
+		public final int key;
 
-	public boolean type(char key, java.awt.event.KeyEvent ev) {
-	    if((this.key != -1) && (key == this.key)) {
-		click();
-		return(true);
-	    }
-	    return(false);
-	}
-    }
-
-    public class Panel extends Widget {
-	public Panel(Coord sz) {
-	    super(Coord.z, sz, OptWnd.this);
-	    visible = false;
-	}
-    }
-
-    public class VideoPanel extends Panel {
-	public VideoPanel(Panel back) {
-	    super(new Coord(200, 200));
-	    new PButton(new Coord(0, 180), 200, this, "Back", 27, back);
-	}
-
-	public class CPanel extends Widget {
-	    public final GLSettings cf;
-
-	    public CPanel(GLSettings gcf) {
-		super(Coord.z, new Coord(200, 175), VideoPanel.this);
-		this.cf = gcf;
-		int y = 0;
-		new CheckBox(new Coord(0, y), this, "Render shadows") {
-		    {a = cf.lshadow.val;}
-
-		    public void set(boolean val) {
-			if(val) {
-			    try {
-				cf.flight.set(true);
-				cf.lshadow.set(true);
-			    } catch(GLSettings.SettingException e) {
-				getparent(GameUI.class).error(e.getMessage());
-				return;
-			    }
-			} else {
-			    cf.lshadow.set(false);
-			    cf.flight.set(false);
-			}
-			a = val;
-			cf.dirty = true;
-		    }
-		};
-		y += 20;
-		new CheckBox(new Coord(0, y), this, "Antialiasing") {
-		    {a = cf.fsaa.val;}
-
-		    public void set(boolean val) {
-			try {
-			    cf.fsaa.set(val);
-			} catch(GLSettings.SettingException e) {
-			    getparent(GameUI.class).error(e.getMessage());
-			    return;
-			}
-			a = val;
-			cf.dirty = true;
-		    }
-		};
-		y += 20;
-		new CheckBox(new Coord(0, y), this, "Better quality water") {
-		    {a = cf.wsurf.val;}
-
-		    public void set(boolean val) {
-			try {
-			    cf.wsurf.set(val);
-			} catch(GLSettings.SettingException e) {
-			    getparent(GameUI.class).error(e.getMessage());
-			    return;
-			}
-			a = val;
-			cf.dirty = true;
-		    }
-		};
-		y += 20;
-		new Label(new Coord(0, y), this, "Anisotropic filtering");
-		if(cf.anisotex.max() <= 1) {
-		    new Label(new Coord(15, y + 15), this, "(Not supported)");
-		} else {
-		    final Label dpy = new Label(new Coord(165, y + 15), this, "");
-		    new HSlider(new Coord(0, y + 15), 160, this, (int)(cf.anisotex.min() * 128), (int)(cf.anisotex.max() * 128), (int)(cf.anisotex.val * 128)) {
-			{
-			    dpy();
-			    this.c.y = dpy.c.y + ((dpy.sz.y - this.sz.y) / 2);
-			}
-			void dpy() {
-			    if(val < 128)
-				dpy.settext("Off");
-			    else
-				dpy.settext(String.format("%.1fx", (val / 128.0)));
-			}
-			public void changed() {
-			    try {
-				cf.anisotex.set(val / 128.0f);
-			    } catch(GLSettings.SettingException e) {
-				getparent(GameUI.class).error(e.getMessage());
-				return;
-			    }
-			    dpy();
-			    cf.dirty = true;
-			}
-		    };
+		public PButton(Coord c, int w, Widget parent, String title, int key, Panel tgt) {
+			super(c, w, parent, title);
+			this.tgt = tgt;
+			this.key = key;
 		}
-		y += 30;
-	    }
+
+		public void click() {
+			chpanel(tgt);
+		}
+
+		public boolean type(char key, java.awt.event.KeyEvent ev) {
+			if ((this.key != -1) && (key == this.key)) {
+				click();
+				return (true);
+			}
+			return (false);
+		}
 	}
 
-	private CPanel curcf = null;
-	public void draw(GOut g) {
-	    if((curcf == null) || (g.gc.pref != curcf.cf)) {
-		if(curcf != null)
-		    curcf.destroy();
-		curcf = new CPanel(g.gc.pref);
-	    }
-	    super.draw(g);
+	public class Panel extends Widget {
+		public Panel(Coord sz) {
+			super(Coord.z, sz, OptWnd.this);
+			visible = false;
+		}
 	}
-    }
 
-    public OptWnd(Coord c, Widget parent) {
-	super(c, Coord.z, parent, "Options");
-	main = new Panel(new Coord(200, 200));
-	Panel video = new VideoPanel(main);
-	Panel audio = new Panel(new Coord(200, 200));
-	int y;
+	public class VideoPanel extends Panel {
+		public VideoPanel(Panel back) {
+			super(new Coord(200, 200));
+			new PButton(new Coord(0, 180), 200, this, "Back", 27, back);
+		}
 
-	new PButton(new Coord(0, 0), 200, main, "Video settings", 'v', video);
-	new PButton(new Coord(0, 30), 200, main, "Audio settings", 'a', audio);
-	new Button(new Coord(0, 120), 200, main, "Switch character") {
-	    public void click() {
-		getparent(GameUI.class).act("lo", "cs");
-	    }
-	};
-	new Button(new Coord(0, 150), 200, main, "Log out") {
-	    public void click() {
-		getparent(GameUI.class).act("lo");
-	    }
-	};
-	new Button(new Coord(0, 180), 200, main, "Close") {
-	    public void click() {
-		OptWnd.this.hide();
-	    }
-	};
+		public class CPanel extends Widget {
+			public final GLSettings cf;
 
-	y = 0;
-	new Label(new Coord(0, y), audio, "Audio volume");
-	y += 20;
-	new HSlider(new Coord(0, y), 200, audio, 0, 1000, (int)(Audio.volume * 1000)) {
-	    public void changed() {
-		Audio.setvolume(val / 1000.0);
-	    }
-	};
-	new PButton(new Coord(0, 180), 200, audio, "Back", 27, main);
+			public CPanel(GLSettings gcf) {
+				super(Coord.z, new Coord(200, 175), VideoPanel.this);
+				this.cf = gcf;
+				int y = 0;
+				new CheckBox(new Coord(0, y), this, "Render shadows") {
+					{
+						a = cf.lshadow.val;
+					}
 
-	chpanel(main);
-    }
+					public void set(boolean val) {
+						if (val) {
+							try {
+								cf.flight.set(true);
+								cf.lshadow.set(true);
+							} catch (GLSettings.SettingException e) {
+								getparent(GameUI.class).error(e.getMessage());
+								return;
+							}
+						} else {
+							cf.lshadow.set(false);
+							cf.flight.set(false);
+						}
+						a = val;
+						cf.dirty = true;
+					}
+				};
+				y += 20;
+				new CheckBox(new Coord(0, y), this, "Antialiasing") {
+					{
+						a = cf.fsaa.val;
+					}
 
-    public void wdgmsg(Widget sender, String msg, Object... args) {
-	if((sender == this) && (msg == "close")) {
-	    hide();
-	} else {
-	    super.wdgmsg(sender, msg, args);
+					public void set(boolean val) {
+						try {
+							cf.fsaa.set(val);
+						} catch (GLSettings.SettingException e) {
+							getparent(GameUI.class).error(e.getMessage());
+							return;
+						}
+						a = val;
+						cf.dirty = true;
+					}
+				};
+				y += 20;
+				new CheckBox(new Coord(0, y), this, "Better quality water") {
+					{
+						a = cf.wsurf.val;
+					}
+
+					public void set(boolean val) {
+						try {
+							cf.wsurf.set(val);
+						} catch (GLSettings.SettingException e) {
+							getparent(GameUI.class).error(e.getMessage());
+							return;
+						}
+						a = val;
+						cf.dirty = true;
+					}
+				};
+				y += 20;
+				new Label(new Coord(0, y), this, "Anisotropic filtering");
+				if (cf.anisotex.max() <= 1) {
+					new Label(new Coord(15, y + 15), this, "(Not supported)");
+				} else {
+					final Label dpy = new Label(new Coord(165, y + 15), this, "");
+					new HSlider(new Coord(0, y + 15), 160, this, (int) (cf.anisotex.min() * 128), (int) (cf.anisotex.max() * 128), (int) (cf.anisotex.val * 128)) {
+						{
+							dpy();
+							this.c.y = dpy.c.y + ((dpy.sz.y - this.sz.y) / 2);
+						}
+
+						void dpy() {
+							if (val < 128)
+								dpy.settext("Off");
+							else
+								dpy.settext(String.format("%.1fx", (val / 128.0)));
+						}
+
+						public void changed() {
+							try {
+								cf.anisotex.set(val / 128.0f);
+							} catch (GLSettings.SettingException e) {
+								getparent(GameUI.class).error(e.getMessage());
+								return;
+							}
+							dpy();
+							cf.dirty = true;
+						}
+					};
+				}
+				y += 30;
+			}
+		}
+
+		private CPanel curcf = null;
+
+		public void draw(GOut g) {
+			if ((curcf == null) || (g.gc.pref != curcf.cf)) {
+				if (curcf != null)
+					curcf.destroy();
+				curcf = new CPanel(g.gc.pref);
+			}
+			super.draw(g);
+		}
 	}
-    }
 
-    public void show() {
-	chpanel(main);
-	super.show();
-    }
+	public OptWnd(Coord c, Widget parent) {
+		super(c, Coord.z, parent, "Options");
+		main = new Panel(new Coord(200, 200));
+		Panel video = new VideoPanel(main);
+		Panel audio = new Panel(new Coord(200, 200));
+		int y;
+
+		new PButton(new Coord(0, 0), 200, main, "Video settings", 'v', video);
+		new PButton(new Coord(0, 30), 200, main, "Audio settings", 'a', audio);
+		new Button(new Coord(0, 120), 200, main, "Switch character") {
+			public void click() {
+				getparent(GameUI.class).act("lo", "cs");
+			}
+		};
+		new Button(new Coord(0, 150), 200, main, "Log out") {
+			public void click() {
+				getparent(GameUI.class).act("lo");
+			}
+		};
+		new Button(new Coord(0, 180), 200, main, "Close") {
+			public void click() {
+				OptWnd.this.hide();
+			}
+		};
+
+		y = 0;
+		new Label(new Coord(0, y), audio, "Audio volume");
+		y += 20;
+		new HSlider(new Coord(0, y), 200, audio, 0, 1000, (int) (Audio.volume * 1000)) {
+			public void changed() {
+				Audio.setvolume(val / 1000.0);
+			}
+		};
+		new PButton(new Coord(0, 180), 200, audio, "Back", 27, main);
+
+		chpanel(main);
+	}
+
+	public void wdgmsg(Widget sender, String msg, Object... args) {
+		if ((sender == this) && (msg == "close")) {
+			hide();
+		} else {
+			super.wdgmsg(sender, msg, args);
+		}
+	}
+
+	public void show() {
+		chpanel(main);
+		super.show();
+	}
 }

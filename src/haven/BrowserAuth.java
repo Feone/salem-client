@@ -30,34 +30,34 @@ import java.net.*;
 import java.io.*;
 
 public abstract class BrowserAuth extends AuthClient.Credentials {
-    public abstract String method();
+	public abstract String method();
 
-    public String tryauth(AuthClient cl) throws IOException {
-	if(WebBrowser.self == null)
-	    throw(new AuthException("Could not find any web browser to launch"));
-	Message rpl = cl.cmd("web", method());
-	String stat = rpl.string();
-	URL url;
-	if(stat.equals("ok")) {
-	    url = new URL(rpl.string());
-	} else if(stat.equals("no")) {
-	    throw(new AuthException(rpl.string()));
-	} else {
-	    throw(new RuntimeException("Unexpected reply `" + stat + "' from auth server"));
+	public String tryauth(AuthClient cl) throws IOException {
+		if (WebBrowser.self == null)
+			throw (new AuthException("Could not find any web browser to launch"));
+		Message rpl = cl.cmd("web", method());
+		String stat = rpl.string();
+		URL url;
+		if (stat.equals("ok")) {
+			url = new URL(rpl.string());
+		} else if (stat.equals("no")) {
+			throw (new AuthException(rpl.string()));
+		} else {
+			throw (new RuntimeException("Unexpected reply `" + stat + "' from auth server"));
+		}
+		try {
+			WebBrowser.self.show(url);
+		} catch (WebBrowser.BrowserException e) {
+			throw (new AuthException("Could not launch web browser"));
+		}
+		rpl = cl.cmd("wait");
+		stat = rpl.string();
+		if (stat.equals("ok")) {
+			return (rpl.string());
+		} else if (stat.equals("no")) {
+			throw (new AuthException(rpl.string()));
+		} else {
+			throw (new RuntimeException("Unexpected reply `" + stat + "' from auth server"));
+		}
 	}
-	try {
-	    WebBrowser.self.show(url);
-	} catch(WebBrowser.BrowserException e) {
-	    throw(new AuthException("Could not launch web browser"));
-	}
-	rpl = cl.cmd("wait");
-	stat = rpl.string();
-	if(stat.equals("ok")) {
-	    return(rpl.string());
-	} else if(stat.equals("no")) {
-	    throw(new AuthException(rpl.string()));
-	} else {
-	    throw(new RuntimeException("Unexpected reply `" + stat + "' from auth server"));
-	}
-    }
 }

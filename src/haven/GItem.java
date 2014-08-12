@@ -32,70 +32,70 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 public class GItem extends AWidget implements ItemInfo.ResOwner {
-    public Indir<Resource> res;
-    public int meter = 0;
-    public int num = -1;
-    private Object[] rawinfo;
-    private List<ItemInfo> info = Collections.emptyList();
-    
-    @RName("item")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    int res = (Integer)args[0];
-	    return(new GItem(parent, parent.ui.sess.getres(res)));
-	}
-    }
-    
-    public interface ColorInfo {
-	public Color olcol();
-    }
-    
-    public interface NumberInfo {
-	public int itemnum();
-    }
+	public Indir<Resource> res;
+	public int meter = 0;
+	public int num = -1;
+	private Object[] rawinfo;
+	private List<ItemInfo> info = Collections.emptyList();
 
-    public class Amount extends ItemInfo implements NumberInfo {
-	private final int num;
-	
-	public Amount(int num) {
-	    super(GItem.this);
-	    this.num = num;
+	@RName("item")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			int res = (Integer) args[0];
+			return (new GItem(parent, parent.ui.sess.getres(res)));
+		}
 	}
-	
-	public int itemnum() {
-	    return(num);
+
+	public interface ColorInfo {
+		public Color olcol();
 	}
-    }
-    
-    public GItem(Widget parent, Indir<Resource> res) {
-	super(parent);
-	this.res = res;
-    }
 
-    public Glob glob() {
-	return(ui.sess.glob);
-    }
-
-    public List<ItemInfo> info() {
-	if(info == null)
-	    info = ItemInfo.buildinfo(this, rawinfo);
-	return(info);
-    }
-    
-    public Resource resource() {
-	return(res.get());
-    }
-
-    public void uimsg(String name, Object... args) {
-	if(name == "num") {
-	    num = (Integer)args[0];
-	} else if(name == "chres") {
-	    res = ui.sess.getres((Integer)args[0]);
-	} else if(name == "tt") {
-	    info = null;
-	    rawinfo = args;
-	} else if(name == "meter") {
-	    meter = (Integer)args[0];
+	public interface NumberInfo {
+		public int itemnum();
 	}
-    }
+
+	public class Amount extends ItemInfo implements NumberInfo {
+		private final int num;
+
+		public Amount(int num) {
+			super(GItem.this);
+			this.num = num;
+		}
+
+		public int itemnum() {
+			return (num);
+		}
+	}
+
+	public GItem(Widget parent, Indir<Resource> res) {
+		super(parent);
+		this.res = res;
+	}
+
+	public Glob glob() {
+		return (ui.sess.glob);
+	}
+
+	public List<ItemInfo> info() {
+		if (info == null)
+			info = ItemInfo.buildinfo(this, rawinfo);
+		return (info);
+	}
+
+	public Resource resource() {
+		return (res.get());
+	}
+
+	public void uimsg(String name, Object... args) {
+		if (name == "num") {
+			num = (Integer) args[0];
+		} else if (name == "chres") {
+			res = ui.sess.getres((Integer) args[0]);
+		} else if (name == "tt") {
+			info = null;
+			rawinfo = args;
+		} else if (name == "meter") {
+			meter = (Integer) args[0];
+		}
+	}
 }

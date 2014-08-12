@@ -27,5 +27,5 @@
 package haven;
 
 public interface Indir<T> {
-    public T get();
+	public T get();
 }

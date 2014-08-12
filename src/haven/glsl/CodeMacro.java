@@ -27,5 +27,5 @@
 package haven.glsl;
 
 public interface CodeMacro {
-    public void expand(Block blk);
+	public void expand(Block blk);
 }

@@ -29,34 +29,42 @@ package haven.glsl;
 import java.util.*;
 
 public abstract class PreOp extends Expression {
-    public final Expression op;
+	public final Expression op;
 
-    public PreOp(Expression op) {
-	this.op = op;
-    }
-
-    public PreOp process(Context ctx) {
-	try {
-	    return(this.getClass().getConstructor(Expression.class).newInstance(op.process(ctx)));
-	} catch(NoSuchMethodException e) {
-	    throw(new Error(e));
-	} catch(InstantiationException e) {
-	    throw(new Error(e));
-	} catch(IllegalAccessException e) {
-	    throw(new Error(e));
-	} catch(java.lang.reflect.InvocationTargetException e) {
-	    throw(new Error(e));
+	public PreOp(Expression op) {
+		this.op = op;
 	}
-    }
 
-    public abstract String form();
+	public PreOp process(Context ctx) {
+		try {
+			return (this.getClass().getConstructor(Expression.class).newInstance(op.process(ctx)));
+		} catch (NoSuchMethodException e) {
+			throw (new Error(e));
+		} catch (InstantiationException e) {
+			throw (new Error(e));
+		} catch (IllegalAccessException e) {
+			throw (new Error(e));
+		} catch (java.lang.reflect.InvocationTargetException e) {
+			throw (new Error(e));
+		}
+	}
 
-    public void output(Output out) {
-	out.write("(");
-	out.write(form());
-	op.output(out);
-	out.write(")");
-    }
+	public abstract String form();
 
-    public static class Neg extends PreOp {public String form() {return("-");} public Neg(Expression op) {super(op);}}
+	public void output(Output out) {
+		out.write("(");
+		out.write(form());
+		op.output(out);
+		out.write(")");
+	}
+
+	public static class Neg extends PreOp {
+		public String form() {
+			return ("-");
+		}
+
+		public Neg(Expression op) {
+			super(op);
+		}
+	}
 }

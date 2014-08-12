@@ -29,33 +29,33 @@ package haven.glsl;
 import java.util.*;
 
 public class Pick extends Expression {
-    public static final String valid = "xyzwrgbastpq";
-    public final Expression val;
-    public final char[] el;
+	public static final String valid = "xyzwrgbastpq";
+	public final Expression val;
+	public final char[] el;
 
-    public Pick(Expression val, char[] el) {
-	for(char c : el) {
-	    if(valid.indexOf(c) < 0)
-		throw(new IllegalArgumentException("`" + c + "' is not a valid swizzling component"));
+	public Pick(Expression val, char[] el) {
+		for (char c : el) {
+			if (valid.indexOf(c) < 0)
+				throw (new IllegalArgumentException("`" + c + "' is not a valid swizzling component"));
+		}
+		this.val = val;
+		this.el = el;
 	}
-	this.val = val;
-	this.el = el;
-    }
 
-    public Pick(Expression val, String el) {
-	this(val, el.toCharArray());
-    }
+	public Pick(Expression val, String el) {
+		this(val, el.toCharArray());
+	}
 
-    public Pick process(Context ctx) {
-	return(new Pick(val.process(ctx), el));
-    }
+	public Pick process(Context ctx) {
+		return (new Pick(val.process(ctx), el));
+	}
 
-    public void output(Output out) {
-	out.write("(");
-	val.output(out);
-	out.write(".");
-	for(char c : el)
-	    out.write(c);
-	out.write(")");
-    }
+	public void output(Output out) {
+		out.write("(");
+		val.output(out);
+		out.write(".");
+		for (char c : el)
+			out.write(c);
+		out.write(")");
+	}
 }

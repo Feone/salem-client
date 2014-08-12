@@ -29,38 +29,38 @@ package haven.glsl;
 import java.util.*;
 
 public class ProgramContext {
-    public final VertexContext vctx;
-    public final FragmentContext fctx;
-    public final Set<Uniform> uniforms = new HashSet<Uniform>();
-    public final Set<Attribute> attribs = new HashSet<Attribute>();
-    public final Map<Symbol, String> symtab = new HashMap<Symbol, String>();
-    public final Map<String, Symbol> rsymtab = new HashMap<String, Symbol>();
-    public int symgen = 1;
-    public boolean dump = false;
-    private final Collection<Object> mods = new LinkedList<Object>();
+	public final VertexContext vctx;
+	public final FragmentContext fctx;
+	public final Set<Uniform> uniforms = new HashSet<Uniform>();
+	public final Set<Attribute> attribs = new HashSet<Attribute>();
+	public final Map<Symbol, String> symtab = new HashMap<Symbol, String>();
+	public final Map<String, Symbol> rsymtab = new HashMap<String, Symbol>();
+	public int symgen = 1;
+	public boolean dump = false;
+	private final Collection<Object> mods = new LinkedList<Object>();
 
-    public static final Variable gl_LightSource = new Variable.Implicit(new Array(Struct.gl_LightSourceParameters), new Symbol.Fix("gl_LightSource"));
-    public static final Variable gl_FrontMaterial = new Variable.Implicit(Struct.gl_MaterialParameters, new Symbol.Fix("gl_FrontMaterial"));
+	public static final Variable gl_LightSource = new Variable.Implicit(new Array(Struct.gl_LightSourceParameters), new Symbol.Fix("gl_LightSource"));
+	public static final Variable gl_FrontMaterial = new Variable.Implicit(Struct.gl_MaterialParameters, new Symbol.Fix("gl_FrontMaterial"));
 
-    public ProgramContext() {
-	vctx = new VertexContext(this);
-	fctx = new FragmentContext(this);
-    }
-
-    public void module(Object mod) {
-	mods.add(mod);
-    }
-
-    public <T> T getmod(Class<T> cl) {
-	T ret = null;
-	for(Object mod : mods) {
-	    if(cl.isInstance(mod)) {
-		if(ret == null)
-		    ret = cl.cast(mod);
-		else
-		    throw(new RuntimeException("multiple modules of " + cl + " installed: " + ret + " and " + mod));
-	    }
+	public ProgramContext() {
+		vctx = new VertexContext(this);
+		fctx = new FragmentContext(this);
 	}
-	return(ret);
-    }
+
+	public void module(Object mod) {
+		mods.add(mod);
+	}
+
+	public <T> T getmod(Class<T> cl) {
+		T ret = null;
+		for (Object mod : mods) {
+			if (cl.isInstance(mod)) {
+				if (ret == null)
+					ret = cl.cast(mod);
+				else
+					throw (new RuntimeException("multiple modules of " + cl + " installed: " + ret + " and " + mod));
+			}
+		}
+		return (ret);
+	}
 }

@@ -27,64 +27,64 @@
 package haven;
 
 public class ItemDrag extends WItem {
-    public Coord doff;
-    
-    public ItemDrag(Coord dc, Widget parent, GItem item) {
-	super(parent.ui.mc.add(dc.inv()), parent, item);
-	this.doff = dc;
-	ui.grabmouse(this);
-    }
-    
-    public void drawmain(GOut g, Tex tex) {
-	g.chcolor(255, 255, 255, 128);
-	g.image(tex, Coord.z);
-	g.chcolor();
-    }
+	public Coord doff;
 
-    public boolean dropon(Widget w, Coord c) {
-	if(w instanceof DTarget) {
-	    if(((DTarget)w).drop(c, c.add(doff.inv())))
-		return(true);
+	public ItemDrag(Coord dc, Widget parent, GItem item) {
+		super(parent.ui.mc.add(dc.inv()), parent, item);
+		this.doff = dc;
+		ui.grabmouse(this);
 	}
-	for(Widget wdg = w.lchild; wdg != null; wdg = wdg.prev) {
-	    if(wdg == this)
-		continue;
-	    Coord cc = w.xlate(wdg.c, true);
-	    if(c.isect(cc, wdg.sz)) {
-		if(dropon(wdg, c.add(cc.inv())))
-		    return(true);
-	    }
-	}
-	return(false);
-    }
-	
-    public boolean interact(Widget w, Coord c) {
-	if(w instanceof DTarget) {
-	    if(((DTarget)w).iteminteract(c, c.add(doff.inv())))
-		return(true);
-	}
-	for(Widget wdg = w.lchild; wdg != null; wdg = wdg.prev) {
-	    if(wdg == this)
-		continue;
-	    Coord cc = w.xlate(wdg.c, true);
-	    if(c.isect(cc, wdg.sz)) {
-		if(interact(wdg, c.add(cc.inv())))
-		    return(true);
-	    }
-	}
-	return(false);
-    }
-	
-    public boolean mousedown(Coord c, int button) {
-	if(button == 1) {
-	    dropon(parent, c.add(this.c));
-	} else if(button == 3) {
-	    interact(parent, c.add(this.c));
-	}
-	return(false);
-    }
 
-    public void mousemove(Coord c) {
-	this.c = this.c.add(c.add(doff.inv()));
-    }
+	public void drawmain(GOut g, Tex tex) {
+		g.chcolor(255, 255, 255, 128);
+		g.image(tex, Coord.z);
+		g.chcolor();
+	}
+
+	public boolean dropon(Widget w, Coord c) {
+		if (w instanceof DTarget) {
+			if (((DTarget) w).drop(c, c.add(doff.inv())))
+				return (true);
+		}
+		for (Widget wdg = w.lchild; wdg != null; wdg = wdg.prev) {
+			if (wdg == this)
+				continue;
+			Coord cc = w.xlate(wdg.c, true);
+			if (c.isect(cc, wdg.sz)) {
+				if (dropon(wdg, c.add(cc.inv())))
+					return (true);
+			}
+		}
+		return (false);
+	}
+
+	public boolean interact(Widget w, Coord c) {
+		if (w instanceof DTarget) {
+			if (((DTarget) w).iteminteract(c, c.add(doff.inv())))
+				return (true);
+		}
+		for (Widget wdg = w.lchild; wdg != null; wdg = wdg.prev) {
+			if (wdg == this)
+				continue;
+			Coord cc = w.xlate(wdg.c, true);
+			if (c.isect(cc, wdg.sz)) {
+				if (interact(wdg, c.add(cc.inv())))
+					return (true);
+			}
+		}
+		return (false);
+	}
+
+	public boolean mousedown(Coord c, int button) {
+		if (button == 1) {
+			dropon(parent, c.add(this.c));
+		} else if (button == 3) {
+			interact(parent, c.add(this.c));
+		}
+		return (false);
+	}
+
+	public void mousemove(Coord c) {
+		this.c = this.c.add(c.add(doff.inv()));
+	}
 }

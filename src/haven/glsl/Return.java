@@ -27,19 +27,19 @@
 package haven.glsl;
 
 public class Return extends Statement {
-    public final Expression rv;
+	public final Expression rv;
 
-    public Return(Expression rv) {
-	this.rv = rv;
-    }
+	public Return(Expression rv) {
+		this.rv = rv;
+	}
 
-    public Return process(Context ctx) {
-	return(new Return(rv.process(ctx)));
-    }
+	public Return process(Context ctx) {
+		return (new Return(rv.process(ctx)));
+	}
 
-    public void output(Output out) {
-	out.write("return ");
-	rv.output(out);
-	out.write(";");
-    }
+	public void output(Output out) {
+		out.write("return ");
+		rv.output(out);
+		out.write(";");
+	}
 }

@@ -32,192 +32,185 @@ import static haven.glsl.Type.*;
 import haven.glsl.ValBlock.Value;
 
 public class Phong extends ValBlock.Group {
-    private final ProgramContext prog;
-    private final Expression vert, edir, norm;
-    public final GValue bcol = new GValue(VEC3), scol = new GValue(VEC3);
-    public final boolean pfrag;
-    public static final Uniform nlights = new Uniform(INT);
+	private final ProgramContext prog;
+	private final Expression vert, edir, norm;
+	public final GValue bcol = new GValue(VEC3), scol = new GValue(VEC3);
+	public final boolean pfrag;
+	public static final Uniform nlights = new Uniform(INT);
 
-    public static class CelShade implements ShaderMacro {
-	public static final Function celramp = new Function.Def(VEC3) {{
-	    Expression c = param(IN, VEC3).ref();
-	    Block.Local m = code.local(FLOAT, max(pick(c, "r"), pick(c, "g"), pick(c, "b")));
-	    code.add(new If(lt(m.ref(), l(0.01)),
-			    new Return(Vec3Cons.z)));
-	    Block.Local v = code.local(FLOAT, null);
-	    code.add(new If(gt(m.ref(), l(0.5)),
-			    stmt(ass(v, l(1.0))),
-			    new If(gt(m.ref(), l(0.1)),
-				   stmt(ass(v, l(0.5))),
-				   stmt(ass(v, l(0.0))))));
-	    code.add(new Return(mul(c, div(v.ref(), m.ref()))));
-	}};
+	public static class CelShade implements ShaderMacro {
+		public static final Function celramp = new Function.Def(VEC3) {
+			{
+				Expression c = param(IN, VEC3).ref();
+				Block.Local m = code.local(FLOAT, max(pick(c, "r"), pick(c, "g"), pick(c, "b")));
+				code.add(new If(lt(m.ref(), l(0.01)), new Return(Vec3Cons.z)));
+				Block.Local v = code.local(FLOAT, null);
+				code.add(new If(gt(m.ref(), l(0.5)), stmt(ass(v, l(1.0))), new If(gt(m.ref(), l(0.1)), stmt(ass(v, l(0.5))), stmt(ass(v, l(0.0))))));
+				code.add(new Return(mul(c, div(v.ref(), m.ref()))));
+			}
+		};
 
-	public void modify(ProgramContext prog) {
-	    Phong ph = prog.getmod(Phong.class);
-	    Macro1<Expression> cel = new Macro1<Expression>() {
-		public Expression expand(Expression in) {
-		    return(celramp.call(in));
+		public void modify(ProgramContext prog) {
+			Phong ph = prog.getmod(Phong.class);
+			Macro1<Expression> cel = new Macro1<Expression>() {
+				public Expression expand(Expression in) {
+					return (celramp.call(in));
+				}
+			};
+			ph.bcol.mod(cel, 0);
+			ph.scol.mod(cel, 0);
 		}
-	    };
-	    ph.bcol.mod(cel, 0);
-	    ph.scol.mod(cel, 0);
-	}
-    }
-
-    public class DoLight extends Function.Def {
-	public final Expression i = param(IN, INT).ref();
-	public final Expression vert = param(IN, VEC3).ref();
-	public final Expression edir = param(IN, VEC3).ref();
-	public final Expression norm = param(IN, VEC3).ref();
-	public final LValue diff = param(INOUT, VEC3).ref();
-	public final LValue spec = param(INOUT, VEC3).ref();
-	public final Expression ls = idx(prog.gl_LightSource.ref(), i);
-	public final Expression mat = prog.gl_FrontMaterial.ref();
-	public final Expression shine = fref(mat, "shininess");
-	public final Value lvl, dir, dl, sl;
-	public final ValBlock dvals = new ValBlock();
-	public final ValBlock svals = new ValBlock();
-	private final OrderList<Runnable> mods = new OrderList<Runnable>();
-	public Block dcalc, scalc;
-	public Statement dcurs, scurs;
-
-	private DoLight() {
-	    super(VOID);
-
-	    ValBlock.Group tdep = dvals.new Group() {
-		    public void cons1() {
-		    }
-
-		    public void cons2(Block blk) {
-			lvl.var = blk.local(FLOAT, null);
-			dir.var = blk.local(VEC3, null);
-			Block.Local rel = new Block.Local(VEC3);
-			Block.Local dst = new Block.Local(FLOAT);
-			code.add(new If(eq(pick(fref(ls, "position"), "w"), l(0.0)),
-					new Block(stmt(ass(lvl.var, l(1.0))),
-						  stmt(ass(dir.var, pick(fref(ls, "position"), "xyz")))),
-					new Block(rel.new Def(sub(pick(fref(ls, "position"), "xyz"), vert)),
-						  stmt(ass(dir.var, normalize(rel.ref()))),
-						  dst.new Def(length(rel.ref())),
-						  stmt(ass(lvl.var, inv(add(fref(ls, "constantAttenuation"),
-									    mul(fref(ls, "linearAttenuation"), dst.ref()),
-									    mul(fref(ls, "quadraticAttenuation"), dst.ref(), dst.ref()))))))));
-		    }
-		};
-	    lvl = tdep.new GValue(FLOAT);
-	    dir = tdep.new GValue(VEC3);
-	    dl = dvals.new Value(FLOAT) {
-		    public Expression root() {
-			return(dot(norm, dir.depref()));
-		    }
-		};
-	    sl = svals.new Value(FLOAT) {
-		    public Expression root() {
-			Expression reflvl = pow(max(dot(edir, reflect(neg(dir.ref()), norm)), l(0.0)), shine);
-			Expression hvlvl = pow(max(dot(norm, normalize(add(edir, dir.ref())))), shine);
-			return(reflvl);
-		    }
-		};
-	    lvl.force();
-	    dl.force();
-	    sl.force();
 	}
 
-	protected void cons() {
-	    dvals.cons(code);
-	    code.add(stmt(aadd(diff, mul(pick(fref(mat, "ambient"), "rgb"),
-					 pick(fref(ls,  "ambient"), "rgb"),
-					 lvl.ref()))));
+	public class DoLight extends Function.Def {
+		public final Expression i = param(IN, INT).ref();
+		public final Expression vert = param(IN, VEC3).ref();
+		public final Expression edir = param(IN, VEC3).ref();
+		public final Expression norm = param(IN, VEC3).ref();
+		public final LValue diff = param(INOUT, VEC3).ref();
+		public final LValue spec = param(INOUT, VEC3).ref();
+		public final Expression ls = idx(prog.gl_LightSource.ref(), i);
+		public final Expression mat = prog.gl_FrontMaterial.ref();
+		public final Expression shine = fref(mat, "shininess");
+		public final Value lvl, dir, dl, sl;
+		public final ValBlock dvals = new ValBlock();
+		public final ValBlock svals = new ValBlock();
+		private final OrderList<Runnable> mods = new OrderList<Runnable>();
+		public Block dcalc, scalc;
+		public Statement dcurs, scurs;
 
-	    code.add(new If(gt(dl.ref(), l(0.0)), dcalc = new Block()));
-	    dcalc.add(dcurs = new Placeholder());
-	    dcalc.add(aadd(diff, mul(pick(fref(mat, "diffuse"), "rgb"),
-				     pick(fref(ls,  "diffuse"), "rgb"),
-				     dl.ref(), lvl.ref())));
+		private DoLight() {
+			super(VOID);
 
-	    dcalc.add(new If(gt(shine, l(0.5)), scalc = new Block()));
-	    svals.cons(scalc);
-	    scalc.add(scurs = new Placeholder());
-	    scalc.add(aadd(spec, mul(pick(fref(mat, "specular"), "rgb"),
-				     pick(fref(ls,  "specular"), "rgb"),
-				     sl.ref())));
+			ValBlock.Group tdep = dvals.new Group() {
+				public void cons1() {
+				}
 
-	    for(Runnable mod : mods)
-		mod.run();
-	}
-
-	public void mod(Runnable mod, int order) {
-	    mods.add(mod, order);
-	}
-    }
-    public final DoLight dolight;
-
-    public void cons1() {
-    }
-
-    public void cons2(Block blk) {
-	bcol.var = blk.local(VEC3, pick(fref(prog.gl_FrontMaterial.ref(), "emission"), "rgb"));
-	scol.var = blk.local(VEC3, Vec3Cons.z);
-	boolean unroll = true;
-	if(!unroll) {
-	    Variable i = blk.local(INT, "i", null);
-	    blk.add(new For(ass(i, l(0)), lt(i.ref(), nlights.ref()), linc(i.ref()),
-			    stmt(dolight.call(i.ref(), vert, edir, norm, bcol.var.ref(), scol.var.ref()))));
-	} else {
-	    for(int i = 0; i < 4; i++) {
-		/* No few drivers seem to be having trouble with the for
-		 * loop. It would be nice to be able to select this code
-		 * path only on those drivers. */
-		blk.add(new If(gt(nlights.ref(), l(i)),
-			       stmt(dolight.call(l(i), vert, edir, norm, bcol.var.ref(), scol.var.ref()))));
-	    }
-	}
-	bcol.addmods(blk); scol.addmods(blk);
-    }
-
-    private static void fmod(final FragmentContext fctx, final Expression bcol, final Expression scol) {
-	fctx.fragcol.mod(new Macro1<Expression>() {
-		public Expression expand(Expression in) {
-		    return(add(mul(in, vec4(bcol, pick(fref(fctx.prog.gl_FrontMaterial.ref(), "diffuse"), "a"))), vec4(scol, l(0.0))));
+				public void cons2(Block blk) {
+					lvl.var = blk.local(FLOAT, null);
+					dir.var = blk.local(VEC3, null);
+					Block.Local rel = new Block.Local(VEC3);
+					Block.Local dst = new Block.Local(FLOAT);
+					code.add(new If(eq(pick(fref(ls, "position"), "w"), l(0.0)), new Block(stmt(ass(lvl.var, l(1.0))), stmt(ass(dir.var, pick(fref(ls, "position"), "xyz")))), new Block(rel.new Def(sub(pick(fref(ls, "position"), "xyz"), vert)), stmt(ass(dir.var, normalize(rel.ref()))), dst.new Def(length(rel.ref())), stmt(ass(lvl.var,
+							inv(add(fref(ls, "constantAttenuation"), mul(fref(ls, "linearAttenuation"), dst.ref()), mul(fref(ls, "quadraticAttenuation"), dst.ref(), dst.ref()))))))));
+				}
+			};
+			lvl = tdep.new GValue(FLOAT);
+			dir = tdep.new GValue(VEC3);
+			dl = dvals.new Value(FLOAT) {
+				public Expression root() {
+					return (dot(norm, dir.depref()));
+				}
+			};
+			sl = svals.new Value(FLOAT) {
+				public Expression root() {
+					Expression reflvl = pow(max(dot(edir, reflect(neg(dir.ref()), norm)), l(0.0)), shine);
+					Expression hvlvl = pow(max(dot(norm, normalize(add(edir, dir.ref())))), shine);
+					return (reflvl);
+				}
+			};
+			lvl.force();
+			dl.force();
+			sl.force();
 		}
-	    }, 500);
-    }
 
-    public Phong(VertexContext vctx) {
-	vctx.mainvals.super();
-	pfrag = false;
-	prog = vctx.prog;
-	Value edir = MiscLib.vertedir(vctx);
-	depend(vctx.eyev); depend(edir); depend(vctx.eyen);
-	this.vert = pick(vctx.eyev.ref(), "xyz");
-	this.edir = edir.ref();
-	this.norm = vctx.eyen.ref();
+		protected void cons() {
+			dvals.cons(code);
+			code.add(stmt(aadd(diff, mul(pick(fref(mat, "ambient"), "rgb"), pick(fref(ls, "ambient"), "rgb"), lvl.ref()))));
 
-	Expression bcol = new AutoVarying(VEC3) {
-		public Expression root(VertexContext vctx) {return(Phong.this.bcol.depref());}
-	    }.ref();
-	Expression scol = new AutoVarying(VEC3) {
-		public Expression root(VertexContext vctx) {return(Phong.this.scol.depref());}
-	    }.ref();
-	fmod(vctx.prog.fctx, bcol, scol);
-	dolight = new DoLight();
-	prog.module(this);
-    }
+			code.add(new If(gt(dl.ref(), l(0.0)), dcalc = new Block()));
+			dcalc.add(dcurs = new Placeholder());
+			dcalc.add(aadd(diff, mul(pick(fref(mat, "diffuse"), "rgb"), pick(fref(ls, "diffuse"), "rgb"), dl.ref(), lvl.ref())));
 
-    public Phong(FragmentContext fctx) {
-	fctx.mainvals.super();
-	pfrag = true;
-	prog = fctx.prog;
-	Value edir = MiscLib.fragedir(fctx);
-	Value norm = MiscLib.frageyen(fctx);
-	depend(edir); depend(norm);
-	this.vert = MiscLib.frageyev.ref();
-	this.edir = edir.ref();
-	this.norm = norm.ref();
-	fmod(fctx, bcol.ref(), scol.ref());
-	fctx.fragcol.depend(bcol);
-	dolight = new DoLight();
-	prog.module(this);
-    }
+			dcalc.add(new If(gt(shine, l(0.5)), scalc = new Block()));
+			svals.cons(scalc);
+			scalc.add(scurs = new Placeholder());
+			scalc.add(aadd(spec, mul(pick(fref(mat, "specular"), "rgb"), pick(fref(ls, "specular"), "rgb"), sl.ref())));
+
+			for (Runnable mod : mods)
+				mod.run();
+		}
+
+		public void mod(Runnable mod, int order) {
+			mods.add(mod, order);
+		}
+	}
+
+	public final DoLight dolight;
+
+	public void cons1() {
+	}
+
+	public void cons2(Block blk) {
+		bcol.var = blk.local(VEC3, pick(fref(prog.gl_FrontMaterial.ref(), "emission"), "rgb"));
+		scol.var = blk.local(VEC3, Vec3Cons.z);
+		boolean unroll = true;
+		if (!unroll) {
+			Variable i = blk.local(INT, "i", null);
+			blk.add(new For(ass(i, l(0)), lt(i.ref(), nlights.ref()), linc(i.ref()), stmt(dolight.call(i.ref(), vert, edir, norm, bcol.var.ref(), scol.var.ref()))));
+		} else {
+			for (int i = 0; i < 4; i++) {
+				/*
+				 * No few drivers seem to be having trouble with the for loop.
+				 * It would be nice to be able to select this code path only on
+				 * those drivers.
+				 */
+				blk.add(new If(gt(nlights.ref(), l(i)), stmt(dolight.call(l(i), vert, edir, norm, bcol.var.ref(), scol.var.ref()))));
+			}
+		}
+		bcol.addmods(blk);
+		scol.addmods(blk);
+	}
+
+	private static void fmod(final FragmentContext fctx, final Expression bcol, final Expression scol) {
+		fctx.fragcol.mod(new Macro1<Expression>() {
+			public Expression expand(Expression in) {
+				return (add(mul(in, vec4(bcol, pick(fref(fctx.prog.gl_FrontMaterial.ref(), "diffuse"), "a"))), vec4(scol, l(0.0))));
+			}
+		}, 500);
+	}
+
+	public Phong(VertexContext vctx) {
+		vctx.mainvals.super();
+		pfrag = false;
+		prog = vctx.prog;
+		Value edir = MiscLib.vertedir(vctx);
+		depend(vctx.eyev);
+		depend(edir);
+		depend(vctx.eyen);
+		this.vert = pick(vctx.eyev.ref(), "xyz");
+		this.edir = edir.ref();
+		this.norm = vctx.eyen.ref();
+
+		Expression bcol = new AutoVarying(VEC3) {
+			public Expression root(VertexContext vctx) {
+				return (Phong.this.bcol.depref());
+			}
+		}.ref();
+		Expression scol = new AutoVarying(VEC3) {
+			public Expression root(VertexContext vctx) {
+				return (Phong.this.scol.depref());
+			}
+		}.ref();
+		fmod(vctx.prog.fctx, bcol, scol);
+		dolight = new DoLight();
+		prog.module(this);
+	}
+
+	public Phong(FragmentContext fctx) {
+		fctx.mainvals.super();
+		pfrag = true;
+		prog = fctx.prog;
+		Value edir = MiscLib.fragedir(fctx);
+		Value norm = MiscLib.frageyen(fctx);
+		depend(edir);
+		depend(norm);
+		this.vert = MiscLib.frageyev.ref();
+		this.edir = edir.ref();
+		this.norm = norm.ref();
+		fmod(fctx, bcol.ref(), scol.ref());
+		fctx.fragcol.depend(bcol);
+		dolight = new DoLight();
+		prog.module(this);
+	}
 }

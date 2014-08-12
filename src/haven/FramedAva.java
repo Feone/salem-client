@@ -30,38 +30,38 @@ import java.awt.Color;
 import java.util.*;
 
 public class FramedAva extends Widget {
-    public static final IBox box = Window.swbox;
-    public Color color = new Color(133, 92, 62);
-    public final Avaview view;
+	public static final IBox box = Window.swbox;
+	public Color color = new Color(133, 92, 62);
+	public final Avaview view;
 
-    @RName("av")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    return(new Avaview(c, Avaview.dasz, parent, (Integer)args[0], "avacam"));
+	@RName("av")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			return (new Avaview(c, Avaview.dasz, parent, (Integer) args[0], "avacam"));
+		}
 	}
-    }
 
-    public FramedAva(Coord c, Coord sz, Widget parent, long avagob, String camnm) {
-	super(c, sz, parent);
-	this.view = new Avaview(box.btloff(), sz.sub(box.bisz()), this, avagob, camnm);
-    }
-
-    public void uimsg(String msg, Object... args) {
-	if(msg == "upd") {
-	    view.avagob = (long)(Integer)args[0];
-	    return;
+	public FramedAva(Coord c, Coord sz, Widget parent, long avagob, String camnm) {
+		super(c, sz, parent);
+		this.view = new Avaview(box.btloff(), sz.sub(box.bisz()), this, avagob, camnm);
 	}
-	super.uimsg(msg, args);
-    }
 
-    public void draw(GOut g) {
-	super.draw(g);
-	g.chcolor(color);
-	box.draw(g, Coord.z, sz);
-    }
+	public void uimsg(String msg, Object... args) {
+		if (msg == "upd") {
+			view.avagob = (long) (Integer) args[0];
+			return;
+		}
+		super.uimsg(msg, args);
+	}
 
-    public boolean mousedown(Coord c, int button) {
-	wdgmsg("click", button);
-	return(true);
-    }
+	public void draw(GOut g) {
+		super.draw(g);
+		g.chcolor(color);
+		box.draw(g, Coord.z, sz);
+	}
+
+	public boolean mousedown(Coord c, int button) {
+		wdgmsg("click", button);
+		return (true);
+	}
 }

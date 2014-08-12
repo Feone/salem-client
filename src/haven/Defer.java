@@ -29,209 +29,212 @@ package haven;
 import java.util.*;
 
 public class Defer extends ThreadGroup {
-    private static final Map<ThreadGroup, Defer> groups = new WeakHashMap<ThreadGroup, Defer>();
-    private final Queue<Future<?>> queue = new PrioQueue<Future<?>>();
-    private final Collection<Thread> pool = new LinkedList<Thread>();
-    private final int maxthreads = 2;
-    
-    public interface Callable<T> {
-	public T call() throws InterruptedException;
-    }
+	private static final Map<ThreadGroup, Defer> groups = new WeakHashMap<ThreadGroup, Defer>();
+	private final Queue<Future<?>> queue = new PrioQueue<Future<?>>();
+	private final Collection<Thread> pool = new LinkedList<Thread>();
+	private final int maxthreads = 2;
 
-    public static class CancelledException extends RuntimeException {
-	public CancelledException() {
-	    super("Execution cancelled");
-	}
-	
-	public CancelledException(Throwable cause) {
-	    super(cause);
-	}
-    }
-
-    public static class DeferredException extends RuntimeException {
-	public DeferredException(Throwable cause) {
-	    super(cause);
-	}
-    }
-
-    public static class NotDoneException extends Loading {
-	public final Future future;
-
-	public NotDoneException(Future future) {
-	    this.future = future;
+	public interface Callable<T> {
+		public T call() throws InterruptedException;
 	}
 
-	public boolean canwait() {return(true);}
-	public void waitfor() throws InterruptedException {
-	    synchronized(future) {
-		while(!future.done())
-		    future.wait();
-	    }
-	}
-    }
-
-    public class Future<T> implements Runnable, Prioritized {
-	public final Callable<T> task;
-	private int prio = 0;
-	private T val;
-	private volatile String state = "";
-	private RuntimeException exc = null;
-	private Thread running = null;
-	
-	private Future(Callable<T> task) {
-	    this.task = task;
-	}
-
-	public void cancel() {
-	    synchronized(this) {
-		if(running != null) {
-		    running.interrupt();
-		} else {
-		    exc = new CancelledException();
-		    chstate("done");
+	public static class CancelledException extends RuntimeException {
+		public CancelledException() {
+			super("Execution cancelled");
 		}
-	    }
+
+		public CancelledException(Throwable cause) {
+			super(cause);
+		}
 	}
 
-	private void chstate(String nst) {
-	    synchronized(this) {
-		this.state = nst;
-		notifyAll();
-	    }
+	public static class DeferredException extends RuntimeException {
+		public DeferredException(Throwable cause) {
+			super(cause);
+		}
 	}
 
-	public void run() {
-	    synchronized(this) {
-		if(state == "done")
-		    return;
-		running = Thread.currentThread();
-	    }
-	    try {
-		val = task.call();
-		chstate("done");
-	    } catch(InterruptedException exc) {
-		this.exc = new CancelledException(exc);
-		chstate("done");
-	    } catch(Loading exc) {
-	    } catch(RuntimeException exc) {
-		this.exc = exc;
-		chstate("done");
-	    } finally {
-		if(state != "done")
-		    chstate("resched");
-		running = null;
-	    }
-	}
-	
-	public T get() {
-	    synchronized(this) {
-		boostprio(5);
-		if(state == "done") {
-		    if(exc != null)
-			throw(new DeferredException(exc));
-		    return(val);
-		}
-		if(state == "resched") {
-		    defer(this);
-		    state = "";
-		}
-		throw(new NotDoneException(this));
-	    }
-	}
-	
-	public boolean done() {
-	    synchronized(this) {
-		boostprio(5);
-		if(state == "resched") {
-		    defer(this);
-		    state = "";
-		}
-		return(state == "done");
-	    }
-	}
-	
-	public int priority() {
-	    return(prio);
-	}
-	
-	public void boostprio(int prio) {
-	    synchronized(this) {
-		if(this.prio < prio)
-		    this.prio = prio;
-	    }
-	}
-    }
+	public static class NotDoneException extends Loading {
+		public final Future future;
 
-    private class Worker extends HackThread {
-	private Worker() {
-	    super(Defer.this, null, "Worker thread");
-	    setDaemon(true);
-	}
-	
-	public void run() {
-	    try {
-		while(true) {
-		    Future<?> f;
-		    try {
-			long start = System.currentTimeMillis();
-			synchronized(queue) {
-			    while((f = queue.poll()) == null) {
-				if(System.currentTimeMillis() - start > 5000)
-				    return;
-				queue.wait(1000);
-			    }
+		public NotDoneException(Future future) {
+			this.future = future;
+		}
+
+		public boolean canwait() {
+			return (true);
+		}
+
+		public void waitfor() throws InterruptedException {
+			synchronized (future) {
+				while (!future.done())
+					future.wait();
 			}
-		    } catch(InterruptedException e) {
-			return;
-		    }
-		    f.run();
-		    f = null;
 		}
-	    } finally {
-		synchronized(queue) {
-		    pool.remove(this);
-		    if((pool.size() < 1) && !queue.isEmpty()) {
-			Thread n = new Worker();
-			n.start();
-			pool.add(n);
-		    }
+	}
+
+	public class Future<T> implements Runnable, Prioritized {
+		public final Callable<T> task;
+		private int prio = 0;
+		private T val;
+		private volatile String state = "";
+		private RuntimeException exc = null;
+		private Thread running = null;
+
+		private Future(Callable<T> task) {
+			this.task = task;
 		}
-	    }
-	}
-    }
 
-    public Defer(ThreadGroup parent) {
-	super(parent, "DPC threads");
-    }
-    
-    private void defer(Future<?> f) {
-	synchronized(queue) {
-	    boolean e = queue.isEmpty();
-	    queue.add(f);
-	    queue.notify();
-	    if((pool.isEmpty() || !e) && (pool.size() < maxthreads)) {
-		Thread n = new Worker();
-		n.start();
-		pool.add(n);
-	    }
-	}
-    }
+		public void cancel() {
+			synchronized (this) {
+				if (running != null) {
+					running.interrupt();
+				} else {
+					exc = new CancelledException();
+					chstate("done");
+				}
+			}
+		}
 
-    public <T> Future<T> defer(Callable<T> task) {
-	Future<T> f = new Future<T>(task);
-	defer(f);
-	return(f);
-    }
-    
-    public static <T> Future<T> later(Callable<T> task) {
-	ThreadGroup tg = Thread.currentThread().getThreadGroup();
-	if(tg instanceof Defer)
-	    return(((Defer)tg).defer(task));
-	Defer d;
-	synchronized(groups) {
-	    if((d = groups.get(tg)) == null)
-		groups.put(tg, d = new Defer(tg));
+		private void chstate(String nst) {
+			synchronized (this) {
+				this.state = nst;
+				notifyAll();
+			}
+		}
+
+		public void run() {
+			synchronized (this) {
+				if (state == "done")
+					return;
+				running = Thread.currentThread();
+			}
+			try {
+				val = task.call();
+				chstate("done");
+			} catch (InterruptedException exc) {
+				this.exc = new CancelledException(exc);
+				chstate("done");
+			} catch (Loading exc) {
+			} catch (RuntimeException exc) {
+				this.exc = exc;
+				chstate("done");
+			} finally {
+				if (state != "done")
+					chstate("resched");
+				running = null;
+			}
+		}
+
+		public T get() {
+			synchronized (this) {
+				boostprio(5);
+				if (state == "done") {
+					if (exc != null)
+						throw (new DeferredException(exc));
+					return (val);
+				}
+				if (state == "resched") {
+					defer(this);
+					state = "";
+				}
+				throw (new NotDoneException(this));
+			}
+		}
+
+		public boolean done() {
+			synchronized (this) {
+				boostprio(5);
+				if (state == "resched") {
+					defer(this);
+					state = "";
+				}
+				return (state == "done");
+			}
+		}
+
+		public int priority() {
+			return (prio);
+		}
+
+		public void boostprio(int prio) {
+			synchronized (this) {
+				if (this.prio < prio)
+					this.prio = prio;
+			}
+		}
 	}
-	return(d.defer(task));
-    }
+
+	private class Worker extends HackThread {
+		private Worker() {
+			super(Defer.this, null, "Worker thread");
+			setDaemon(true);
+		}
+
+		public void run() {
+			try {
+				while (true) {
+					Future<?> f;
+					try {
+						long start = System.currentTimeMillis();
+						synchronized (queue) {
+							while ((f = queue.poll()) == null) {
+								if (System.currentTimeMillis() - start > 5000)
+									return;
+								queue.wait(1000);
+							}
+						}
+					} catch (InterruptedException e) {
+						return;
+					}
+					f.run();
+					f = null;
+				}
+			} finally {
+				synchronized (queue) {
+					pool.remove(this);
+					if ((pool.size() < 1) && !queue.isEmpty()) {
+						Thread n = new Worker();
+						n.start();
+						pool.add(n);
+					}
+				}
+			}
+		}
+	}
+
+	public Defer(ThreadGroup parent) {
+		super(parent, "DPC threads");
+	}
+
+	private void defer(Future<?> f) {
+		synchronized (queue) {
+			boolean e = queue.isEmpty();
+			queue.add(f);
+			queue.notify();
+			if ((pool.isEmpty() || !e) && (pool.size() < maxthreads)) {
+				Thread n = new Worker();
+				n.start();
+				pool.add(n);
+			}
+		}
+	}
+
+	public <T> Future<T> defer(Callable<T> task) {
+		Future<T> f = new Future<T>(task);
+		defer(f);
+		return (f);
+	}
+
+	public static <T> Future<T> later(Callable<T> task) {
+		ThreadGroup tg = Thread.currentThread().getThreadGroup();
+		if (tg instanceof Defer)
+			return (((Defer) tg).defer(task));
+		Defer d;
+		synchronized (groups) {
+			if ((d = groups.get(tg)) == null)
+				groups.put(tg, d = new Defer(tg));
+		}
+		return (d.defer(task));
+	}
 }

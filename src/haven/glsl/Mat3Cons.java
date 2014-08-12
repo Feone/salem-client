@@ -27,28 +27,28 @@
 package haven.glsl;
 
 public class Mat3Cons extends Expression {
-    public final Expression[] els;
+	public final Expression[] els;
 
-    public Mat3Cons(Expression... els) {
-	if((els.length < 1) || (els.length > 9))
-	    throw(new RuntimeException("Invalid number of arguments for mat3: " + els.length));
-	this.els = els;
-    }
-
-    public Mat3Cons process(Context ctx) {
-	Expression[] nels = new Expression[els.length];
-	for(int i = 0; i < els.length; i++)
-	    nels[i] = els[i].process(ctx);
-	return(new Mat3Cons(nels));
-    }
-
-    public void output(Output out) {
-	out.write("mat3(");
-	els[0].output(out);
-	for(int i = 1; i < els.length; i++) {
-	    out.write(", ");
-	    els[i].output(out);
+	public Mat3Cons(Expression... els) {
+		if ((els.length < 1) || (els.length > 9))
+			throw (new RuntimeException("Invalid number of arguments for mat3: " + els.length));
+		this.els = els;
 	}
-	out.write(")");
-    }
+
+	public Mat3Cons process(Context ctx) {
+		Expression[] nels = new Expression[els.length];
+		for (int i = 0; i < els.length; i++)
+			nels[i] = els[i].process(ctx);
+		return (new Mat3Cons(nels));
+	}
+
+	public void output(Output out) {
+		out.write("mat3(");
+		els[0].output(out);
+		for (int i = 1; i < els.length; i++) {
+			out.write(", ");
+			els[i].output(out);
+		}
+		out.write(")");
+	}
 }

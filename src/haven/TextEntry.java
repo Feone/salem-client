@@ -30,114 +30,116 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class TextEntry extends Widget {
-    public static final Text.Foundry fnd = new Text.Foundry(new Font("SansSerif", Font.PLAIN, 12), Color.BLACK);
-    public static final int defh = fnd.height() + 2;
-    public LineEdit buf;
-    public int sx;
-    public boolean pw = false;
-    public String text;
-    private Text.Line tcache = null;
+	public static final Text.Foundry fnd = new Text.Foundry(new Font("SansSerif", Font.PLAIN, 12), Color.BLACK);
+	public static final int defh = fnd.height() + 2;
+	public LineEdit buf;
+	public int sx;
+	public boolean pw = false;
+	public String text;
+	private Text.Line tcache = null;
 
-    @RName("text")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    if(args[0] instanceof Coord)
-		return(new TextEntry(c, (Coord)args[0], parent, (String)args[1]));
-	    else
-		return(new TextEntry(c, (Integer)args[0], parent, (String)args[1]));
-	}
-    }
-
-    public void settext(String text) {
-	buf.setline(text);
-    }
-
-    public void rsettext(String text) {
-	buf = new LineEdit(this.text = text) {
-		protected void done(String line) {
-		    activate(line);
+	@RName("text")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			if (args[0] instanceof Coord)
+				return (new TextEntry(c, (Coord) args[0], parent, (String) args[1]));
+			else
+				return (new TextEntry(c, (Integer) args[0], parent, (String) args[1]));
 		}
-		
-		protected void changed() {
-		    TextEntry.this.text = line;
-		    TextEntry.this.changed();
+	}
+
+	public void settext(String text) {
+		buf.setline(text);
+	}
+
+	public void rsettext(String text) {
+		buf = new LineEdit(this.text = text) {
+			protected void done(String line) {
+				activate(line);
+			}
+
+			protected void changed() {
+				TextEntry.this.text = line;
+				TextEntry.this.changed();
+			}
+		};
+	}
+
+	public void uimsg(String name, Object... args) {
+		if (name == "settext") {
+			settext((String) args[0]);
+		} else if (name == "get") {
+			wdgmsg("text", buf.line);
+		} else if (name == "pw") {
+			pw = ((Integer) args[0]) == 1;
+		} else {
+			super.uimsg(name, args);
 		}
-	    };
-    }
-
-    public void uimsg(String name, Object... args) {
-	if(name == "settext") {
-	    settext((String)args[0]);
-	} else if(name == "get") {
-	    wdgmsg("text", buf.line);
-	} else if(name == "pw") {
-	    pw = ((Integer)args[0]) == 1;
-	} else {
-	    super.uimsg(name, args);
 	}
-    }
 
-    protected void drawbg(GOut g) {
-	g.frect(Coord.z, sz);
-    }
-
-    public void draw(GOut g) {
-	super.draw(g);
-	String dtext;
-	if(pw) {
-	    dtext = "";
-	    for(int i = 0; i < buf.line.length(); i++)
-		dtext += "*";
-	} else {
-	    dtext = buf.line;
+	protected void drawbg(GOut g) {
+		g.frect(Coord.z, sz);
 	}
-	drawbg(g);
-	if((tcache == null) || !tcache.text.equals(dtext))
-	    tcache = fnd.render(dtext);
-	int cx = tcache.advance(buf.point);
-	if(cx < sx) sx = cx;
-	if(cx > sx + (sz.x - 1)) sx = cx - (sz.x - 1);
-	g.image(tcache.tex(), new Coord(-sx, 0));
-	if(hasfocus && ((System.currentTimeMillis() % 1000) > 500)) {
-	    int lx = cx - sx + 1;
-	    g.chcolor(0, 0, 0, 255);
-	    g.line(new Coord(lx, 1), new Coord(lx, tcache.sz().y - 1), 1);
-	    g.chcolor();
+
+	public void draw(GOut g) {
+		super.draw(g);
+		String dtext;
+		if (pw) {
+			dtext = "";
+			for (int i = 0; i < buf.line.length(); i++)
+				dtext += "*";
+		} else {
+			dtext = buf.line;
+		}
+		drawbg(g);
+		if ((tcache == null) || !tcache.text.equals(dtext))
+			tcache = fnd.render(dtext);
+		int cx = tcache.advance(buf.point);
+		if (cx < sx)
+			sx = cx;
+		if (cx > sx + (sz.x - 1))
+			sx = cx - (sz.x - 1);
+		g.image(tcache.tex(), new Coord(-sx, 0));
+		if (hasfocus && ((System.currentTimeMillis() % 1000) > 500)) {
+			int lx = cx - sx + 1;
+			g.chcolor(0, 0, 0, 255);
+			g.line(new Coord(lx, 1), new Coord(lx, tcache.sz().y - 1), 1);
+			g.chcolor();
+		}
 	}
-    }
 
-    public TextEntry(Coord c, Coord sz, Widget parent, String deftext) {
-	super(c, sz, parent);
-	rsettext(deftext);
-	setcanfocus(true);
-    }
-
-    public TextEntry(Coord c, int w, Widget parent, String deftext) {
-	this(c, new Coord(w, defh), parent, deftext);
-    }
-
-    protected void changed() {
-    }
-
-    public void activate(String text) {
-	if(canactivate)
-	    wdgmsg("activate", text);
-    }
-
-    public boolean type(char c, KeyEvent ev) {
-	return(buf.key(ev));
-    }
-
-    public boolean keydown(KeyEvent e) {
-	buf.key(e);
-	return(true);
-    }
-
-    public boolean mousedown(Coord c, int button) {
-	parent.setfocus(this);
-	if(tcache != null) {
-	    buf.point = tcache.charat(c.x + sx);
+	public TextEntry(Coord c, Coord sz, Widget parent, String deftext) {
+		super(c, sz, parent);
+		rsettext(deftext);
+		setcanfocus(true);
 	}
-	return(true);
-    }
+
+	public TextEntry(Coord c, int w, Widget parent, String deftext) {
+		this(c, new Coord(w, defh), parent, deftext);
+	}
+
+	protected void changed() {
+	}
+
+	public void activate(String text) {
+		if (canactivate)
+			wdgmsg("activate", text);
+	}
+
+	public boolean type(char c, KeyEvent ev) {
+		return (buf.key(ev));
+	}
+
+	public boolean keydown(KeyEvent e) {
+		buf.key(e);
+		return (true);
+	}
+
+	public boolean mousedown(Coord c, int button) {
+		parent.setfocus(this);
+		if (tcache != null) {
+			buf.point = tcache.charat(c.x + sx);
+		}
+		return (true);
+	}
 }

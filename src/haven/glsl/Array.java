@@ -27,22 +27,22 @@
 package haven.glsl;
 
 public class Array extends Type {
-    public final Type el;
-    public final int sz;
+	public final Type el;
+	public final int sz;
 
-    public Array(Type el, int sz) {
-	this.el = el;
-	this.sz = sz;
-    }
+	public Array(Type el, int sz) {
+		this.el = el;
+		this.sz = sz;
+	}
 
-    public Array(Type el) {
-	this(el, 0);
-    }
+	public Array(Type el) {
+		this(el, 0);
+	}
 
-    public String name(Context ctx) {
-	if(sz > 0)
-	    return(el.name(ctx) + "[" + sz + "]");
-	else
-	    return(el.name(ctx) + "[]");
-    }
+	public String name(Context ctx) {
+		if (sz > 0)
+			return (el.name(ctx) + "[" + sz + "]");
+		else
+			return (el.name(ctx) + "[]");
+	}
 }

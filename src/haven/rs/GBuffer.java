@@ -30,156 +30,161 @@ import haven.*;
 import javax.media.opengl.*;
 
 public class GBuffer {
-    public final Context ctx;
-    public final Coord sz;
-    private final GLFrameBuffer buf;
-    private final GLState ostate;
+	public final Context ctx;
+	public final Coord sz;
+	private final GLFrameBuffer buf;
+	private final GLState ostate;
 
-    public static class Context {
-	private final Object dmon = new Object();
-	public final GLProfile prof;
-	public final GLAutoDrawable buf;
-	private final GLState gstate;
-	private GLConfig glconf;
-	private GBuffer curdraw;
-	private GLState.Applier state;
+	public static class Context {
+		private final Object dmon = new Object();
+		public final GLProfile prof;
+		public final GLAutoDrawable buf;
+		private final GLState gstate;
+		private GLConfig glconf;
+		private GBuffer curdraw;
+		private GLState.Applier state;
 
-	public Context() {
-	    this.prof = GLProfile.getDefault();
-	    GLDrawableFactory df = GLDrawableFactory.getFactory(prof);
-	    gstate = new GLState() {
-		    public void apply(GOut g) {
-			GL2 gl = g.gl;
-			gl.glColor3f(1, 1, 1);
-			gl.glPointSize(4);
-			gl.setSwapInterval(1);
-			gl.glEnable(GL.GL_BLEND);
-			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-			if(g.gc.havefsaa())
-			    g.gl.glDisable(GL.GL_MULTISAMPLE);
-			GOut.checkerr(gl);
-		    }
-		    public void unapply(GOut g) {
-		    }
-		    public void prep(Buffer buf) {
-			buf.put(HavenPanel.global, this);
-		    }
-		};
-	    /* XXX: This seems a bit unreliable. On Xorg with nvidia
-	     * drivers, an OffscreenAutoDrawable produces no results,
-	     * while a Pbuffer works; while on Xvfb with mesa-swx, an
-	     * OffscreenAutoDrawable works, while Pbuffer creation
-	     * fails. :-/ */
-	    this.buf = df.createOffscreenAutoDrawable(null, caps(prof), null, 1, 1, null);
-	    buf.addGLEventListener(new GLEventListener() {
-		    public void display(GLAutoDrawable d) {
-			GL2 gl = d.getGL().getGL2();
-			/* gl = new TraceGL2(gl, System.err) */
-			redraw(gl);
-			GLObject.disposeall(gl);
-		    }
+		public Context() {
+			this.prof = GLProfile.getDefault();
+			GLDrawableFactory df = GLDrawableFactory.getFactory(prof);
+			gstate = new GLState() {
+				public void apply(GOut g) {
+					GL2 gl = g.gl;
+					gl.glColor3f(1, 1, 1);
+					gl.glPointSize(4);
+					gl.setSwapInterval(1);
+					gl.glEnable(GL.GL_BLEND);
+					gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+					if (g.gc.havefsaa())
+						g.gl.glDisable(GL.GL_MULTISAMPLE);
+					GOut.checkerr(gl);
+				}
 
-		    public void init(GLAutoDrawable d) {
-			GL2 gl = d.getGL().getGL2();
-			glconf = GLConfig.fromgl(gl, d.getContext(), d.getChosenGLCapabilities());
-			glconf.pref = GLSettings.defconf(glconf);
-			glconf.pref.meshmode.val = GLSettings.MeshMode.MEM;
-		    }
+				public void unapply(GOut g) {
+				}
 
-		    public void reshape(GLAutoDrawable d, final int x, final int y, final int w, final int h) {
-		    }
+				public void prep(Buffer buf) {
+					buf.put(HavenPanel.global, this);
+				}
+			};
+			/*
+			 * XXX: This seems a bit unreliable. On Xorg with nvidia drivers, an
+			 * OffscreenAutoDrawable produces no results, while a Pbuffer works;
+			 * while on Xvfb with mesa-swx, an OffscreenAutoDrawable works,
+			 * while Pbuffer creation fails. :-/
+			 */
+			this.buf = df.createOffscreenAutoDrawable(null, caps(prof), null, 1, 1, null);
+			buf.addGLEventListener(new GLEventListener() {
+				public void display(GLAutoDrawable d) {
+					GL2 gl = d.getGL().getGL2();
+					/* gl = new TraceGL2(gl, System.err) */
+					redraw(gl);
+					GLObject.disposeall(gl);
+				}
 
-		    public void dispose(GLAutoDrawable d) {
-			GL2 gl = d.getGL().getGL2();
-			GLObject.disposeall(gl);
-		    }
-		});
-	}
+				public void init(GLAutoDrawable d) {
+					GL2 gl = d.getGL().getGL2();
+					glconf = GLConfig.fromgl(gl, d.getContext(), d.getChosenGLCapabilities());
+					glconf.pref = GLSettings.defconf(glconf);
+					glconf.pref.meshmode.val = GLSettings.MeshMode.MEM;
+				}
 
-	protected GLCapabilities caps(GLProfile prof) {
-	    GLCapabilities ret = new GLCapabilities(prof);
-	    ret.setDoubleBuffered(true);
-	    ret.setAlphaBits(8);
-	    ret.setRedBits(8);
-	    ret.setGreenBits(8);
-	    ret.setBlueBits(8);
-	    ret.setSampleBuffers(true);
-	    ret.setNumSamples(4);
-	    return(ret);
-	}
+				public void reshape(GLAutoDrawable d, final int x, final int y, final int w, final int h) {
+				}
 
-	private void redraw(GL2 gl) {
-	    curdraw.redraw(gl);
-	}
-    }
-
-    public GBuffer(Context ctx, Coord sz) {
-	this.ctx = ctx;
-	this.sz = sz;
-	buf = new GLFrameBuffer(new TexE(sz, GL.GL_RGBA, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE), null);
-	ostate = HavenPanel.OrthoState.fixed(new Coord(sz));
-    }
-
-    private static Context defctx = null;
-    private static Context defctx() {
-	synchronized(GBuffer.class) {
-	    if(defctx == null)
-		defctx = new Context();
-	}
-	return(defctx);
-    }
-    public GBuffer(Coord sz) {
-	this(defctx(), sz);
-    }
-
-    private Drawn curdraw;
-
-    protected void redraw(GL2 gl) {
-	if((ctx.state == null) || (ctx.state.gl != gl))
-	    ctx.state = new GLState.Applier(gl, ctx.glconf);
-	GLState.Buffer ibuf = new GLState.Buffer(ctx.glconf);
-	ctx.gstate.prep(ibuf);
-	ostate.prep(ibuf);
-	buf.prep(ibuf);
-	GOut g = new GOut(gl, ctx.buf.getContext(), ctx.glconf, ctx.state, ibuf, sz);
-	g.apply();
-	gl.glClearColor(0, 0, 0, 0);
-	gl.glClear(GL.GL_COLOR_BUFFER_BIT);
-	curdraw.draw(g);
-	ctx.state.clean();
-    }
-
-    public void render(Drawn thing) {
-	synchronized(ctx.dmon) {
-	    curdraw = thing;
-	    ctx.curdraw = this;
-	    try {
-		ctx.buf.display();
-	    } finally {
-		curdraw = null;
-		ctx.curdraw = null;
-	    }
-	}
-    }
-
-    public void dispose() {
-	buf.dispose();
-    }
-
-    public static void main(String[] args) {
-	GBuffer test = new GBuffer(new Coord(250, 250));
-	test.render(new Drawn() {
-		public void draw(GOut g) {
-		    g.chcolor(255, 0, 128, 255);
-		    g.frect(new Coord(50, 50), new Coord(100, 100));
-		    try {
-			javax.imageio.ImageIO.write(g.getimage(), "PNG", new java.io.File("/tmp/bard.png"));
-		    } catch(java.io.IOException e) {
-			throw(new RuntimeException(e));
-		    }
-		    g.checkerr(g.gl);
+				public void dispose(GLAutoDrawable d) {
+					GL2 gl = d.getGL().getGL2();
+					GLObject.disposeall(gl);
+				}
+			});
 		}
-	    });
-	
-    }
+
+		protected GLCapabilities caps(GLProfile prof) {
+			GLCapabilities ret = new GLCapabilities(prof);
+			ret.setDoubleBuffered(true);
+			ret.setAlphaBits(8);
+			ret.setRedBits(8);
+			ret.setGreenBits(8);
+			ret.setBlueBits(8);
+			ret.setSampleBuffers(true);
+			ret.setNumSamples(4);
+			return (ret);
+		}
+
+		private void redraw(GL2 gl) {
+			curdraw.redraw(gl);
+		}
+	}
+
+	public GBuffer(Context ctx, Coord sz) {
+		this.ctx = ctx;
+		this.sz = sz;
+		buf = new GLFrameBuffer(new TexE(sz, GL.GL_RGBA, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE), null);
+		ostate = HavenPanel.OrthoState.fixed(new Coord(sz));
+	}
+
+	private static Context defctx = null;
+
+	private static Context defctx() {
+		synchronized (GBuffer.class) {
+			if (defctx == null)
+				defctx = new Context();
+		}
+		return (defctx);
+	}
+
+	public GBuffer(Coord sz) {
+		this(defctx(), sz);
+	}
+
+	private Drawn curdraw;
+
+	protected void redraw(GL2 gl) {
+		if ((ctx.state == null) || (ctx.state.gl != gl))
+			ctx.state = new GLState.Applier(gl, ctx.glconf);
+		GLState.Buffer ibuf = new GLState.Buffer(ctx.glconf);
+		ctx.gstate.prep(ibuf);
+		ostate.prep(ibuf);
+		buf.prep(ibuf);
+		GOut g = new GOut(gl, ctx.buf.getContext(), ctx.glconf, ctx.state, ibuf, sz);
+		g.apply();
+		gl.glClearColor(0, 0, 0, 0);
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT);
+		curdraw.draw(g);
+		ctx.state.clean();
+	}
+
+	public void render(Drawn thing) {
+		synchronized (ctx.dmon) {
+			curdraw = thing;
+			ctx.curdraw = this;
+			try {
+				ctx.buf.display();
+			} finally {
+				curdraw = null;
+				ctx.curdraw = null;
+			}
+		}
+	}
+
+	public void dispose() {
+		buf.dispose();
+	}
+
+	public static void main(String[] args) {
+		GBuffer test = new GBuffer(new Coord(250, 250));
+		test.render(new Drawn() {
+			public void draw(GOut g) {
+				g.chcolor(255, 0, 128, 255);
+				g.frect(new Coord(50, 50), new Coord(100, 100));
+				try {
+					javax.imageio.ImageIO.write(g.getimage(), "PNG", new java.io.File("/tmp/bard.png"));
+				} catch (java.io.IOException e) {
+					throw (new RuntimeException(e));
+				}
+				g.checkerr(g.gl);
+			}
+		});
+
+	}
 }

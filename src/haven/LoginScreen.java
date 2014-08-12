@@ -32,283 +32,286 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 public class LoginScreen extends Widget {
-    Login cur;
-    Text error;
-    IButton btn;
-    static final Text.Furnace textf, texte, textfs;
-    static final Tex bg = Resource.loadtex("gfx/loginscr");
-    static final Tex cbox = Resource.loadtex("gfx/hud/login/cbox");
-    static final Coord cboxc = new Coord((bg.sz().x - cbox.sz().x) / 2, 310);
-    Text progress = null;
-	
-    static {
-	textf = new Text.Foundry(new Font("Sans", Font.BOLD, 16), Color.BLACK).aa(true);
-	texte = new Text.Foundry(new Font("Sans", Font.BOLD, 18), new Color(255, 0, 0)).aa(true);
-	textfs = new Text.Foundry(new Font("Sans", Font.BOLD, 14), Color.BLACK).aa(true);
-    }
-	
-    public LoginScreen(Widget parent) {
-	super(parent.sz.div(2).sub(bg.sz().div(2)), bg.sz(), parent);
-	setfocustab(true);
-	parent.setfocus(this);
-	new Img(Coord.z, bg, this);
-	new Img(cboxc, cbox, this);
-    }
+	Login cur;
+	Text error;
+	IButton btn;
+	static final Text.Furnace textf, texte, textfs;
+	static final Tex bg = Resource.loadtex("gfx/loginscr");
+	static final Tex cbox = Resource.loadtex("gfx/hud/login/cbox");
+	static final Coord cboxc = new Coord((bg.sz().x - cbox.sz().x) / 2, 310);
+	Text progress = null;
 
-    private static abstract class Login extends Widget {
-	private Login(Coord c, Coord sz, Widget parent) {
-	    super(c, sz, parent);
-	}
-		
-	abstract Object[] data();
-	abstract boolean enter();
-    }
-
-    private abstract class PwCommon extends Login {
-	TextEntry user, pass;
-	CheckBox savepass;
-
-	private PwCommon(String username, boolean save) {
-	    super(cboxc, cbox.sz(), LoginScreen.this);
-	    setfocustab(true);
-	    new Img(new Coord(35, 30), textf.render("User name").tex(), this);
-	    user = new TextEntry(new Coord(150, 30), new Coord(150, 20), this, username);
-	    new Img(new Coord(35, 60), textf.render("Password").tex(), this);
-	    pass = new TextEntry(new Coord(150, 60), new Coord(150, 20), this, "");
-	    pass.pw = true;
-	    savepass = new CheckBox(new Coord(150, 90), this, "Remember me");
-	    savepass.a = save;
-	    if(user.text.equals(""))
-		setfocus(user);
-	    else
-		setfocus(pass);
-	}
-		
-	public void wdgmsg(Widget sender, String name, Object... args) {
-	}
-		
-	boolean enter() {
-	    if(user.text.equals("")) {
-		setfocus(user);
-		return(false);
-	    } else if(pass.text.equals("")) {
-		setfocus(pass);
-		return(false);
-	    } else {
-		return(true);
-	    }
+	static {
+		textf = new Text.Foundry(new Font("Sans", Font.BOLD, 16), Color.BLACK).aa(true);
+		texte = new Text.Foundry(new Font("Sans", Font.BOLD, 18), new Color(255, 0, 0)).aa(true);
+		textfs = new Text.Foundry(new Font("Sans", Font.BOLD, 14), Color.BLACK).aa(true);
 	}
 
-	public boolean globtype(char k, KeyEvent ev) {
-	    if((k == 'r') && ((ev.getModifiersEx() & (KeyEvent.META_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0)) {
-		savepass.set(!savepass.a);
-		return(true);
-	    }
-	    return(false);
-	}
-    }
-
-    private class Pwbox extends PwCommon {
-	private Pwbox(String username, boolean save) {
-	    super(username, save);
-	    if(Config.regurl != null) {
-		final RichText text = RichText.render("If you don't have an account, $col[64,64,255]{$u{register one here}}.", 0, java.awt.font.TextAttribute.FOREGROUND, Color.BLACK);
-		new Widget(new Coord(35, 115), text.sz(), this) {
-		    public void draw(GOut g) {
-			g.image(text.tex(), Coord.z);
-		    }
-
-		    public boolean mousedown(Coord c, int btn) {
-			if(btn == 1) {
-			    Number ul = (Number)text.attrat(c, java.awt.font.TextAttribute.UNDERLINE);
-			    if((ul != null) && (ul.intValue() == java.awt.font.TextAttribute.UNDERLINE_ON)) {
-				try {
-				    WebBrowser.sshow(Config.regurl);
-				} catch(WebBrowser.BrowserException e) {
-				    error("Could not launch browser");
-				}
-			    }
-			}
-			return(true);
-		    }
-		};
-	    }
-	}
-		
-	Object[] data() {
-	    return(new Object[] {new AuthClient.NativeCred(user.text, pass.text), savepass.a});
-	}
-    }
-	
-    private class Pdxbox extends PwCommon {
-	private Pdxbox(String username, boolean save) {
-	    super(username, save);
+	public LoginScreen(Widget parent) {
+		super(parent.sz.div(2).sub(bg.sz().div(2)), bg.sz(), parent);
+		setfocustab(true);
+		parent.setfocus(this);
+		new Img(Coord.z, bg, this);
+		new Img(cboxc, cbox, this);
 	}
 
-	Object[] data() {
-	    return(new Object[] {new ParadoxCreds(user.text, pass.text), savepass.a});
-	}
-    }
-
-    private abstract class WebCommon extends Login {
-	private WebCommon() {
-	    super(cboxc, cbox.sz(), LoginScreen.this);
-	}
-
-	boolean enter() {
-	    return(true);
-	}
-    }
-
-    private class Amazonbox extends WebCommon {
-	Object[] data() {
-	    return(new Object[] {new BrowserAuth() {
-		    public String method() {return("amz");}
-		    public String name() {return("Amazon user");}
-		}, false});
-	}
-    }
-	
-    private class Tokenbox extends Login {
-	Text label;
-	Button btn;
-		
-	private Tokenbox(String username) {
-	    super(cboxc, cbox.sz(), LoginScreen.this);
-	    label = textfs.render("Identity is saved for " + username);
-	    btn = new Button(new Coord((sz.x - 100) / 2, 55), 100, this, "Forget me");
-	}
-		
-	Object[] data() {
-	    return(new Object[0]);
-	}
-		
-	boolean enter() {
-	    return(true);
-	}
-		
-	public void wdgmsg(Widget sender, String name, Object... args) {
-	    if(sender == btn) {
-		LoginScreen.this.wdgmsg("forget");
-		return;
-	    }
-	    super.wdgmsg(sender, name, args);
-	}
-		
-	public void draw(GOut g) {
-	    g.image(label.tex(), new Coord((sz.x - label.sz().x) / 2, 30));
-	    super.draw(g);
-	}
-	
-	public boolean globtype(char k, KeyEvent ev) {
-	    if((k == 'f') && ((ev.getModifiersEx() & (KeyEvent.META_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0)) {
-		LoginScreen.this.wdgmsg("forget");
-		return(true);
-	    }
-	    return(false);
-	}
-    }
-
-    static final BufferedImage[] loginb = {
-	Resource.loadimg("gfx/hud/buttons/loginu"),
-	Resource.loadimg("gfx/hud/buttons/logind"),
-	Resource.loadimg("gfx/hud/buttons/loginh"),
-    };
-    private void mklogin() {
-	synchronized(ui) {
-	    btn = new IButton(cboxc.add((cbox.sz().x - loginb[0].getWidth()) / 2, 140), this, loginb[0], loginb[1], loginb[2]);
-	    progress(null);
-	}
-    }
-	
-    private void error(String error) {
-	synchronized(ui) {
-	    if(this.error != null)
-		this.error = null;
-	    if(error != null)
-		this.error = texte.render(error);
-	}
-    }
-    
-    private void progress(String p) {
-	synchronized(ui) {
-	    if(progress != null)
-		progress = null;
-	    if(p != null)
-		progress = textf.render(p);
-	}
-    }
-    
-    private void clear() {
-	if(cur != null) {
-	    ui.destroy(cur);
-	    cur = null;
-	    ui.destroy(btn);
-	    btn = null;
-	}
-	progress(null);
-    }
-    
-    public void wdgmsg(Widget sender, String msg, Object... args) {
-	if(sender == btn) {
-	    if(cur.enter())
-		super.wdgmsg("login", cur.data());
-	    return;
-	}
-	super.wdgmsg(sender, msg, args);
-    }
-	
-    public void uimsg(String msg, Object... args) {
-	synchronized(ui) {
-	    if(msg == "passwd") {
-		clear();
-		if(Config.authmech.equals("native")) {
-		    cur = new Pwbox((String)args[0], (Boolean)args[1]);
-		} else if(Config.authmech.equals("paradox")) {
-		    cur = new Pdxbox((String)args[0], (Boolean)args[1]);
-		} else if(Config.authmech.equals("amz")) {
-		    cur = new Amazonbox();
-		} else {
-		    throw(new RuntimeException("Unknown authmech `" + Config.authmech + "' specified"));
+	private static abstract class Login extends Widget {
+		private Login(Coord c, Coord sz, Widget parent) {
+			super(c, sz, parent);
 		}
-		mklogin();
-	    } else if(msg == "token") {
-		clear();
-		cur = new Tokenbox((String)args[0]);
-		mklogin();
-	    } else if(msg == "error") {
-		error((String)args[0]);
-	    } else if(msg == "prg") {
-		error(null);
-		clear();
-		progress((String)args[0]);
-	    }
+
+		abstract Object[] data();
+
+		abstract boolean enter();
 	}
-    }
-    
-    public void presize() {
-	c = parent.sz.div(2).sub(sz.div(2));
-    }
-	
-    public void draw(GOut g) {
-	super.draw(g);
-	if(error != null) {
-	    Coord c = new Coord((sz.x - error.sz().x) / 2, 290);
-	    g.chcolor(0, 0, 0, 224);
-	    g.frect(c.sub(4, 2), error.sz().add(8, 4));
-	    g.chcolor();
-	    g.image(error.tex(), c);
+
+	private abstract class PwCommon extends Login {
+		TextEntry user, pass;
+		CheckBox savepass;
+
+		private PwCommon(String username, boolean save) {
+			super(cboxc, cbox.sz(), LoginScreen.this);
+			setfocustab(true);
+			new Img(new Coord(35, 30), textf.render("User name").tex(), this);
+			user = new TextEntry(new Coord(150, 30), new Coord(150, 20), this, username);
+			new Img(new Coord(35, 60), textf.render("Password").tex(), this);
+			pass = new TextEntry(new Coord(150, 60), new Coord(150, 20), this, "");
+			pass.pw = true;
+			savepass = new CheckBox(new Coord(150, 90), this, "Remember me");
+			savepass.a = save;
+			if (user.text.equals(""))
+				setfocus(user);
+			else
+				setfocus(pass);
+		}
+
+		public void wdgmsg(Widget sender, String name, Object... args) {
+		}
+
+		boolean enter() {
+			if (user.text.equals("")) {
+				setfocus(user);
+				return (false);
+			} else if (pass.text.equals("")) {
+				setfocus(pass);
+				return (false);
+			} else {
+				return (true);
+			}
+		}
+
+		public boolean globtype(char k, KeyEvent ev) {
+			if ((k == 'r') && ((ev.getModifiersEx() & (KeyEvent.META_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0)) {
+				savepass.set(!savepass.a);
+				return (true);
+			}
+			return (false);
+		}
 	}
-	if(progress != null)
-	    g.image(progress.tex(), new Coord((sz.x - progress.sz().x) / 2, cboxc.y + ((cbox.sz().y - progress.sz().y) / 2)));
-    }
-	
-    public boolean type(char k, KeyEvent ev) {
-	if(k == 10) {
-	    if((cur != null) && cur.enter())
-		wdgmsg("login", cur.data());
-	    return(true);
+
+	private class Pwbox extends PwCommon {
+		private Pwbox(String username, boolean save) {
+			super(username, save);
+			if (Config.regurl != null) {
+				final RichText text = RichText.render("If you don't have an account, $col[64,64,255]{$u{register one here}}.", 0, java.awt.font.TextAttribute.FOREGROUND, Color.BLACK);
+				new Widget(new Coord(35, 115), text.sz(), this) {
+					public void draw(GOut g) {
+						g.image(text.tex(), Coord.z);
+					}
+
+					public boolean mousedown(Coord c, int btn) {
+						if (btn == 1) {
+							Number ul = (Number) text.attrat(c, java.awt.font.TextAttribute.UNDERLINE);
+							if ((ul != null) && (ul.intValue() == java.awt.font.TextAttribute.UNDERLINE_ON)) {
+								try {
+									WebBrowser.sshow(Config.regurl);
+								} catch (WebBrowser.BrowserException e) {
+									error("Could not launch browser");
+								}
+							}
+						}
+						return (true);
+					}
+				};
+			}
+		}
+
+		Object[] data() {
+			return (new Object[] { new AuthClient.NativeCred(user.text, pass.text), savepass.a });
+		}
 	}
-	return(super.type(k, ev));
-    }
+
+	private class Pdxbox extends PwCommon {
+		private Pdxbox(String username, boolean save) {
+			super(username, save);
+		}
+
+		Object[] data() {
+			return (new Object[] { new ParadoxCreds(user.text, pass.text), savepass.a });
+		}
+	}
+
+	private abstract class WebCommon extends Login {
+		private WebCommon() {
+			super(cboxc, cbox.sz(), LoginScreen.this);
+		}
+
+		boolean enter() {
+			return (true);
+		}
+	}
+
+	private class Amazonbox extends WebCommon {
+		Object[] data() {
+			return (new Object[] { new BrowserAuth() {
+				public String method() {
+					return ("amz");
+				}
+
+				public String name() {
+					return ("Amazon user");
+				}
+			}, false });
+		}
+	}
+
+	private class Tokenbox extends Login {
+		Text label;
+		Button btn;
+
+		private Tokenbox(String username) {
+			super(cboxc, cbox.sz(), LoginScreen.this);
+			label = textfs.render("Identity is saved for " + username);
+			btn = new Button(new Coord((sz.x - 100) / 2, 55), 100, this, "Forget me");
+		}
+
+		Object[] data() {
+			return (new Object[0]);
+		}
+
+		boolean enter() {
+			return (true);
+		}
+
+		public void wdgmsg(Widget sender, String name, Object... args) {
+			if (sender == btn) {
+				LoginScreen.this.wdgmsg("forget");
+				return;
+			}
+			super.wdgmsg(sender, name, args);
+		}
+
+		public void draw(GOut g) {
+			g.image(label.tex(), new Coord((sz.x - label.sz().x) / 2, 30));
+			super.draw(g);
+		}
+
+		public boolean globtype(char k, KeyEvent ev) {
+			if ((k == 'f') && ((ev.getModifiersEx() & (KeyEvent.META_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0)) {
+				LoginScreen.this.wdgmsg("forget");
+				return (true);
+			}
+			return (false);
+		}
+	}
+
+	static final BufferedImage[] loginb = { Resource.loadimg("gfx/hud/buttons/loginu"), Resource.loadimg("gfx/hud/buttons/logind"), Resource.loadimg("gfx/hud/buttons/loginh"), };
+
+	private void mklogin() {
+		synchronized (ui) {
+			btn = new IButton(cboxc.add((cbox.sz().x - loginb[0].getWidth()) / 2, 140), this, loginb[0], loginb[1], loginb[2]);
+			progress(null);
+		}
+	}
+
+	private void error(String error) {
+		synchronized (ui) {
+			if (this.error != null)
+				this.error = null;
+			if (error != null)
+				this.error = texte.render(error);
+		}
+	}
+
+	private void progress(String p) {
+		synchronized (ui) {
+			if (progress != null)
+				progress = null;
+			if (p != null)
+				progress = textf.render(p);
+		}
+	}
+
+	private void clear() {
+		if (cur != null) {
+			ui.destroy(cur);
+			cur = null;
+			ui.destroy(btn);
+			btn = null;
+		}
+		progress(null);
+	}
+
+	public void wdgmsg(Widget sender, String msg, Object... args) {
+		if (sender == btn) {
+			if (cur.enter())
+				super.wdgmsg("login", cur.data());
+			return;
+		}
+		super.wdgmsg(sender, msg, args);
+	}
+
+	public void uimsg(String msg, Object... args) {
+		synchronized (ui) {
+			if (msg == "passwd") {
+				clear();
+				if (Config.authmech.equals("native")) {
+					cur = new Pwbox((String) args[0], (Boolean) args[1]);
+				} else if (Config.authmech.equals("paradox")) {
+					cur = new Pdxbox((String) args[0], (Boolean) args[1]);
+				} else if (Config.authmech.equals("amz")) {
+					cur = new Amazonbox();
+				} else {
+					throw (new RuntimeException("Unknown authmech `" + Config.authmech + "' specified"));
+				}
+				mklogin();
+			} else if (msg == "token") {
+				clear();
+				cur = new Tokenbox((String) args[0]);
+				mklogin();
+			} else if (msg == "error") {
+				error((String) args[0]);
+			} else if (msg == "prg") {
+				error(null);
+				clear();
+				progress((String) args[0]);
+			}
+		}
+	}
+
+	public void presize() {
+		c = parent.sz.div(2).sub(sz.div(2));
+	}
+
+	public void draw(GOut g) {
+		super.draw(g);
+		if (error != null) {
+			Coord c = new Coord((sz.x - error.sz().x) / 2, 290);
+			g.chcolor(0, 0, 0, 224);
+			g.frect(c.sub(4, 2), error.sz().add(8, 4));
+			g.chcolor();
+			g.image(error.tex(), c);
+		}
+		if (progress != null)
+			g.image(progress.tex(), new Coord((sz.x - progress.sz().x) / 2, cboxc.y + ((cbox.sz().y - progress.sz().y) / 2)));
+	}
+
+	public boolean type(char k, KeyEvent ev) {
+		if (k == 10) {
+			if ((cur != null) && cur.enter())
+				wdgmsg("login", cur.data());
+			return (true);
+		}
+		return (super.type(k, ev));
+	}
 }

@@ -27,60 +27,60 @@
 package haven;
 
 public class RemoteUI implements UI.Receiver, UI.Runner {
-    Session sess, ret;
-    UI ui;
-	
-    public RemoteUI(Session sess) {
-	this.sess = sess;
-	Widget.initnames();
-    }
-	
-    public void rcvmsg(int id, String name, Object... args) {
-	Message msg = new Message(Message.RMSG_WDGMSG);
-	msg.adduint16(id);
-	msg.addstring(name);
-	msg.addlist(args);
-	sess.queuemsg(msg);
-    }
-	
-    public void ret(Session sess) {
-	synchronized(this.sess) {
-	    this.ret = sess;
-	    this.sess.notifyAll();
-	}
-    }
+	Session sess, ret;
+	UI ui;
 
-    public Session run(UI ui) throws InterruptedException {
-	this.ui = ui;
-	ui.setreceiver(this);
-	while(true) {
-	    Message msg;
-	    while((msg = sess.getuimsg()) != null) {
-		if(msg.type == Message.RMSG_NEWWDG) {
-		    int id = msg.uint16();
-		    String type = msg.string();
-		    int parent = msg.uint16();
-		    Object[] pargs = msg.list();
-		    Object[] cargs = msg.list();
-		    ui.newwidget(id, type, parent, pargs, cargs);
-		} else if(msg.type == Message.RMSG_WDGMSG) {
-		    int id = msg.uint16();
-		    String name = msg.string();
-		    ui.uimsg(id, name, msg.list());
-		} else if(msg.type == Message.RMSG_DSTWDG) {
-		    int id = msg.uint16();
-		    ui.destroy(id);
-		}
-	    }
-	    synchronized(sess) {
-		if(ret != null) {
-		    sess.close();
-		    return(ret);
-		}
-		if(!sess.alive())
-		    return(null);
-		sess.wait();
-	    }
+	public RemoteUI(Session sess) {
+		this.sess = sess;
+		Widget.initnames();
 	}
-    }
+
+	public void rcvmsg(int id, String name, Object... args) {
+		Message msg = new Message(Message.RMSG_WDGMSG);
+		msg.adduint16(id);
+		msg.addstring(name);
+		msg.addlist(args);
+		sess.queuemsg(msg);
+	}
+
+	public void ret(Session sess) {
+		synchronized (this.sess) {
+			this.ret = sess;
+			this.sess.notifyAll();
+		}
+	}
+
+	public Session run(UI ui) throws InterruptedException {
+		this.ui = ui;
+		ui.setreceiver(this);
+		while (true) {
+			Message msg;
+			while ((msg = sess.getuimsg()) != null) {
+				if (msg.type == Message.RMSG_NEWWDG) {
+					int id = msg.uint16();
+					String type = msg.string();
+					int parent = msg.uint16();
+					Object[] pargs = msg.list();
+					Object[] cargs = msg.list();
+					ui.newwidget(id, type, parent, pargs, cargs);
+				} else if (msg.type == Message.RMSG_WDGMSG) {
+					int id = msg.uint16();
+					String name = msg.string();
+					ui.uimsg(id, name, msg.list());
+				} else if (msg.type == Message.RMSG_DSTWDG) {
+					int id = msg.uint16();
+					ui.destroy(id);
+				}
+			}
+			synchronized (sess) {
+				if (ret != null) {
+					sess.close();
+					return (ret);
+				}
+				if (!sess.alive())
+					return (null);
+				sess.wait();
+			}
+		}
+	}
 }

@@ -31,140 +31,109 @@ import static haven.Inventory.sqlite;
 import static haven.Inventory.sqlo;
 
 public class Equipory extends Widget implements DTarget {
-    static Coord ecoords[] = {
-	new Coord(250, 0),
-	new Coord(50, 70),
-	new Coord(250, 70),
-	new Coord(300, 70),
-	new Coord(50, 0),
-	new Coord(50, 210),
-	new Coord(25, 140),
-	new Coord(275, 140),
-	null,
-	new Coord(0, 0),
-	new Coord(0, 210),
-	new Coord(300, 0),
-	new Coord(300, 210),
-	new Coord(100, 0),
-	new Coord(0, 70),
-	new Coord(250, 210),
-    };
-    static Tex ebgs[] = {
-	Resource.loadtex("gfx/hud/inv/head"),
-	Resource.loadtex("gfx/hud/inv/face"),
-	Resource.loadtex("gfx/hud/inv/shirt"),
-	Resource.loadtex("gfx/hud/inv/torsoa"),
-	Resource.loadtex("gfx/hud/inv/keys"),
-	Resource.loadtex("gfx/hud/inv/belt"),
-	Resource.loadtex("gfx/hud/inv/lhande"),
-	Resource.loadtex("gfx/hud/inv/rhande"),
-	null,
-	Resource.loadtex("gfx/hud/inv/wallet"),
-	Resource.loadtex("gfx/hud/inv/coat"),
-	Resource.loadtex("gfx/hud/inv/cape"),
-	Resource.loadtex("gfx/hud/inv/pants"),
-	null,
-	Resource.loadtex("gfx/hud/inv/back"),
-	Resource.loadtex("gfx/hud/inv/feet"),
-    };
-    static Coord isz;
-    static {
-	isz = new Coord();
-	for(Coord ec : ecoords) {
-	    if(ec == null)
-		continue;
-	    if(ec.x + sqlite.sz().x > isz.x)
-		isz.x = ec.x + sqlite.sz().x;
-	    if(ec.y + sqlite.sz().y > isz.y)
-		isz.y = ec.y + sqlite.sz().y;
+	static Coord ecoords[] = { new Coord(250, 0), new Coord(50, 70), new Coord(250, 70), new Coord(300, 70), new Coord(50, 0), new Coord(50, 210), new Coord(25, 140), new Coord(275, 140), null, new Coord(0, 0), new Coord(0, 210), new Coord(300, 0), new Coord(300, 210), new Coord(100, 0), new Coord(0, 70), new Coord(250, 210), };
+	static Tex ebgs[] = { Resource.loadtex("gfx/hud/inv/head"), Resource.loadtex("gfx/hud/inv/face"), Resource.loadtex("gfx/hud/inv/shirt"), Resource.loadtex("gfx/hud/inv/torsoa"), Resource.loadtex("gfx/hud/inv/keys"), Resource.loadtex("gfx/hud/inv/belt"), Resource.loadtex("gfx/hud/inv/lhande"), Resource.loadtex("gfx/hud/inv/rhande"), null, Resource.loadtex("gfx/hud/inv/wallet"),
+			Resource.loadtex("gfx/hud/inv/coat"), Resource.loadtex("gfx/hud/inv/cape"), Resource.loadtex("gfx/hud/inv/pants"), null, Resource.loadtex("gfx/hud/inv/back"), Resource.loadtex("gfx/hud/inv/feet"), };
+	static Coord isz;
+	static {
+		isz = new Coord();
+		for (Coord ec : ecoords) {
+			if (ec == null)
+				continue;
+			if (ec.x + sqlite.sz().x > isz.x)
+				isz.x = ec.x + sqlite.sz().x;
+			if (ec.y + sqlite.sz().y > isz.y)
+				isz.y = ec.y + sqlite.sz().y;
+		}
 	}
-    }
-    WItem[] slots = new WItem[ecoords.length];
-    Map<GItem, WItem[]> wmap = new HashMap<GItem, WItem[]>();
-	
-    @RName("epry")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    long gobid;
-	    if(args.length < 1)
-		gobid = parent.getparent(GameUI.class).plid;
-	    else
-		gobid = (Integer)args[0];
-	    return(new Equipory(c, parent, gobid));
-	}
-    }
+	WItem[] slots = new WItem[ecoords.length];
+	Map<GItem, WItem[]> wmap = new HashMap<GItem, WItem[]>();
 
-    private class Boxen extends Widget {
-	private Boxen() {
-	    super(Coord.z, isz, Equipory.this);
+	@RName("epry")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			long gobid;
+			if (args.length < 1)
+				gobid = parent.getparent(GameUI.class).plid;
+			else
+				gobid = (Integer) args[0];
+			return (new Equipory(c, parent, gobid));
+		}
 	}
 
-	public void draw(GOut g) {
-	    for(int i = 0; i < ecoords.length; i++) {
-		if(ecoords[i] == null)
-		    continue;
-		g.image(sqlite, ecoords[i]);
-		if((slots[i] == null) && (ebgs[i] != null))
-		    g.image(ebgs[i], ecoords[i].add(sqlo));
-	    }
-	}
-    }
-
-    public Equipory(Coord c, Widget parent, long gobid) {
-	super(c, isz, parent);
-	Avaview ava = new Avaview(Coord.z, isz, this, gobid, "equcam") {
-		public boolean mousedown(Coord c, int button) {
-		    return(false);
+	private class Boxen extends Widget {
+		private Boxen() {
+			super(Coord.z, isz, Equipory.this);
 		}
 
-		protected java.awt.Color clearcolor() {return(null);}
-	    };
-	new Boxen();
-    }
-	
-    public Widget makechild(String type, Object[] pargs, Object[] cargs) {
-	Widget ret = gettype(type).create(Coord.z, this, cargs);
-	if(ret instanceof GItem) {
-	    GItem g = (GItem)ret;
-	    WItem[] v = new WItem[pargs.length];
-	    for(int i = 0; i < pargs.length; i++) {
-		int ep = (Integer)pargs[i];
-		slots[ep] = v[i] = new WItem(ecoords[ep].add(sqlo), this, g);
-	    }
-	    wmap.put(g, v);
-	}
-	return(ret);
-    }
-    
-    public void cdestroy(Widget w) {
-	super.cdestroy(w);
-	if(w instanceof GItem) {
-	    GItem i = (GItem)w;
-	    for(WItem v : wmap.remove(i)) {
-		ui.destroy(v);
-		for(int s = 0; s < slots.length; s++) {
-		    if(slots[s] == v)
-			slots[s] = null;
+		public void draw(GOut g) {
+			for (int i = 0; i < ecoords.length; i++) {
+				if (ecoords[i] == null)
+					continue;
+				g.image(sqlite, ecoords[i]);
+				if ((slots[i] == null) && (ebgs[i] != null))
+					g.image(ebgs[i], ecoords[i].add(sqlo));
+			}
 		}
-	    }
 	}
-    }
-    
-    public boolean drop(Coord cc, Coord ul) {
-	ul = ul.add(sqlite.sz().div(2));
-	for(int i = 0; i < ecoords.length; i++) {
-	    if(ecoords[i] == null)
-		continue;
-	    if(ul.isect(ecoords[i], sqlite.sz())) {
-		wdgmsg("drop", i);
-		return(true);
-	    }
+
+	public Equipory(Coord c, Widget parent, long gobid) {
+		super(c, isz, parent);
+		Avaview ava = new Avaview(Coord.z, isz, this, gobid, "equcam") {
+			public boolean mousedown(Coord c, int button) {
+				return (false);
+			}
+
+			protected java.awt.Color clearcolor() {
+				return (null);
+			}
+		};
+		new Boxen();
 	}
-	wdgmsg("drop", -1);
-	return(true);
-    }
-    
-    public boolean iteminteract(Coord cc, Coord ul) {
-	return(false);
-    }
+
+	public Widget makechild(String type, Object[] pargs, Object[] cargs) {
+		Widget ret = gettype(type).create(Coord.z, this, cargs);
+		if (ret instanceof GItem) {
+			GItem g = (GItem) ret;
+			WItem[] v = new WItem[pargs.length];
+			for (int i = 0; i < pargs.length; i++) {
+				int ep = (Integer) pargs[i];
+				slots[ep] = v[i] = new WItem(ecoords[ep].add(sqlo), this, g);
+			}
+			wmap.put(g, v);
+		}
+		return (ret);
+	}
+
+	public void cdestroy(Widget w) {
+		super.cdestroy(w);
+		if (w instanceof GItem) {
+			GItem i = (GItem) w;
+			for (WItem v : wmap.remove(i)) {
+				ui.destroy(v);
+				for (int s = 0; s < slots.length; s++) {
+					if (slots[s] == v)
+						slots[s] = null;
+				}
+			}
+		}
+	}
+
+	public boolean drop(Coord cc, Coord ul) {
+		ul = ul.add(sqlite.sz().div(2));
+		for (int i = 0; i < ecoords.length; i++) {
+			if (ecoords[i] == null)
+				continue;
+			if (ul.isect(ecoords[i], sqlite.sz())) {
+				wdgmsg("drop", i);
+				return (true);
+			}
+		}
+		wdgmsg("drop", -1);
+		return (true);
+	}
+
+	public boolean iteminteract(Coord cc, Coord ul) {
+		return (false);
+	}
 }

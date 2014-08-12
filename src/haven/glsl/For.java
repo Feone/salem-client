@@ -27,41 +27,40 @@
 package haven.glsl;
 
 public class For extends Statement {
-    public final Expression init, cond, step;
-    public final Statement body;
+	public final Expression init, cond, step;
+	public final Statement body;
 
-    public For(Expression init, Expression cond, Expression step, Statement body) {
-	this.init = init;
-	this.cond = cond;
-	this.step = step;
-	this.body = body;
-    }
-
-    public For process(Context ctx) {
-	return(new For((init == null)?null:(init.process(ctx)),
-		       (cond == null)?null:(cond.process(ctx)),
-		       (step == null)?null:(step.process(ctx)),
-		       body.process(ctx)));
-    }
-
-    public void output(Output out) {
-	out.write("for(");
-	if(init != null)
-	    init.output(out);
-	out.write("; ");
-	if(cond != null)
-	    cond.output(out);
-	out.write("; ");
-	if(step != null)
-	    step.output(out);
-	out.write(")");
-	if(body instanceof Block) {
-	    out.write(" ");
-	    ((Block)body).trail(out, false);
-	} else {
-	    out.write("\n"); out.indent++; out.indent();
-	    body.output(out);
-	    out.indent--;
+	public For(Expression init, Expression cond, Expression step, Statement body) {
+		this.init = init;
+		this.cond = cond;
+		this.step = step;
+		this.body = body;
 	}
-    }
+
+	public For process(Context ctx) {
+		return (new For((init == null) ? null : (init.process(ctx)), (cond == null) ? null : (cond.process(ctx)), (step == null) ? null : (step.process(ctx)), body.process(ctx)));
+	}
+
+	public void output(Output out) {
+		out.write("for(");
+		if (init != null)
+			init.output(out);
+		out.write("; ");
+		if (cond != null)
+			cond.output(out);
+		out.write("; ");
+		if (step != null)
+			step.output(out);
+		out.write(")");
+		if (body instanceof Block) {
+			out.write(" ");
+			((Block) body).trail(out, false);
+		} else {
+			out.write("\n");
+			out.indent++;
+			out.indent();
+			body.output(out);
+			out.indent--;
+		}
+	}
 }

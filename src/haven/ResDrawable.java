@@ -29,62 +29,63 @@ package haven;
 import java.awt.Color;
 
 public class ResDrawable extends Drawable {
-    final Indir<Resource> res;
-    Message sdt;
-    Sprite spr = null;
-    int delay = 0;
-	
-    public ResDrawable(Gob gob, Indir<Resource> res, Message sdt) {
-	super(gob);
-	this.res = res;
-	this.sdt = sdt;
-	try {
-	    init();
-	} catch(Loading e) {}
-    }
-	
-    public ResDrawable(Gob gob, Resource res) {
-	this(gob, res.indir(), new Message(0));
-    }
-	
-    public void init() {
-	if(spr != null)
-	    return;
-	spr = Sprite.create(gob, res.get(), sdt.clone());
-    }
-	
-    public void setup(RenderList rl) {
-	try {
-	    init();
-	} catch(Loading e) {
-	    return;
+	final Indir<Resource> res;
+	Message sdt;
+	Sprite spr = null;
+	int delay = 0;
+
+	public ResDrawable(Gob gob, Indir<Resource> res, Message sdt) {
+		super(gob);
+		this.res = res;
+		this.sdt = sdt;
+		try {
+			init();
+		} catch (Loading e) {
+		}
 	}
-	spr.setup(rl);
-    }
-	
-    public void ctick(int dt) {
-	if(spr == null) {
-	    delay += dt;
-	} else {
-	    spr.tick(delay + dt);
-	    delay = 0;
+
+	public ResDrawable(Gob gob, Resource res) {
+		this(gob, res.indir(), new Message(0));
 	}
-    }
-    
-    public void dispose() {
-	if(spr != null)
-	    spr.dispose();
-    }
-    
-    public Resource.Neg getneg() {
-	return(res.get().layer(Resource.negc));
-    }
-    
-    public Skeleton.Pose getpose() {
-	init();
-	if(spr instanceof SkelSprite) {
-	    return(((SkelSprite)spr).pose);
+
+	public void init() {
+		if (spr != null)
+			return;
+		spr = Sprite.create(gob, res.get(), sdt.clone());
 	}
-	return(null);
-    }
+
+	public void setup(RenderList rl) {
+		try {
+			init();
+		} catch (Loading e) {
+			return;
+		}
+		spr.setup(rl);
+	}
+
+	public void ctick(int dt) {
+		if (spr == null) {
+			delay += dt;
+		} else {
+			spr.tick(delay + dt);
+			delay = 0;
+		}
+	}
+
+	public void dispose() {
+		if (spr != null)
+			spr.dispose();
+	}
+
+	public Resource.Neg getneg() {
+		return (res.get().layer(Resource.negc));
+	}
+
+	public Skeleton.Pose getpose() {
+		init();
+		if (spr instanceof SkelSprite) {
+			return (((SkelSprite) spr).pose);
+		}
+		return (null);
+	}
 }

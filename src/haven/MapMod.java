@@ -27,120 +27,119 @@
 package haven;
 
 public class MapMod extends Window implements MapView.Grabber {
-    MapView mv;
-    MapView.GrabXL grab;
-    MCache.Overlay ol;
-    MCache map;
-    boolean walkmod;
-    CheckBox cbox;
-    Button btn;
-    Label text;
-    Coord sc, c1, c2;
-    TextEntry tilenm;
-    public final static String fmt = "Selected: %d" + (char)(0xD7) + "%d";
-    
-    @RName("mapmod")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    return(new MapMod(c, parent));
+	MapView mv;
+	MapView.GrabXL grab;
+	MCache.Overlay ol;
+	MCache map;
+	boolean walkmod;
+	CheckBox cbox;
+	Button btn;
+	Label text;
+	Coord sc, c1, c2;
+	TextEntry tilenm;
+	public final static String fmt = "Selected: %d" + (char) (0xD7) + "%d";
+
+	@RName("mapmod")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			return (new MapMod(c, parent));
+		}
 	}
-    }
 
-    public MapMod(Coord c, Widget parent) {
-        super(c, new Coord(200, 100), parent, "Kartlasskostning");
-        map = ui.sess.glob.map;
-	mv = getparent(GameUI.class).map;
-	grab = mv.new GrabXL(this);
-        walkmod = false;
-        mv.enol(17);
-        mv.grab(grab);
-        cbox = new CheckBox(Coord.z, this, "Walk drawing");
-	cbox.canactivate = true;
-        btn = new Button(asz.add(-50, -30), 40, this, "Change");
-        text = new Label(Coord.z, this, String.format(fmt, 0, 0));
-        tilenm = new TextEntry(new Coord(0, 40), new Coord(50, 17), this, "");
-        tilenm.canactivate = true;
-    }
+	public MapMod(Coord c, Widget parent) {
+		super(c, new Coord(200, 100), parent, "Kartlasskostning");
+		map = ui.sess.glob.map;
+		mv = getparent(GameUI.class).map;
+		grab = mv.new GrabXL(this);
+		walkmod = false;
+		mv.enol(17);
+		mv.grab(grab);
+		cbox = new CheckBox(Coord.z, this, "Walk drawing");
+		cbox.canactivate = true;
+		btn = new Button(asz.add(-50, -30), 40, this, "Change");
+		text = new Label(Coord.z, this, String.format(fmt, 0, 0));
+		tilenm = new TextEntry(new Coord(0, 40), new Coord(50, 17), this, "");
+		tilenm.canactivate = true;
+	}
 
-    public void destroy() {
-        mv.disol(17);
-        if(!walkmod)
-            mv.release(grab);
-        if(ol != null)
-            ol.destroy();
-        super.destroy();
-    }
+	public void destroy() {
+		mv.disol(17);
+		if (!walkmod)
+			mv.release(grab);
+		if (ol != null)
+			ol.destroy();
+		super.destroy();
+	}
 
-	
-    public boolean mmousedown(Coord mc, int button) {
-	if(button != 1)
-	    return(false);
-        Coord tc = mc.div(MCache.tilesz);
-        if(ol != null)
-            ol.destroy();
-        ol = map.new Overlay(tc, tc, 1 << 17);
-        sc = tc;
-        grab.mv = true;
-        ui.grabmouse(mv);
-	return(true);
-    }
+	public boolean mmousedown(Coord mc, int button) {
+		if (button != 1)
+			return (false);
+		Coord tc = mc.div(MCache.tilesz);
+		if (ol != null)
+			ol.destroy();
+		ol = map.new Overlay(tc, tc, 1 << 17);
+		sc = tc;
+		grab.mv = true;
+		ui.grabmouse(mv);
+		return (true);
+	}
 
-    public boolean mmousewheel(Coord mc, int amount) {
-	return(false);
-    }
-	
-    public boolean mmouseup(Coord mc, int button) {
-        grab.mv = false;
-        ui.grabmouse(null);
-	return(true);
-    }
-	
-    public void mmousemove(Coord mc) {
-        Coord tc = mc.div(MCache.tilesz);
-        Coord c1 = new Coord(0, 0), c2 = new Coord(0, 0);
-        if(tc.x < sc.x) {
-            c1.x = tc.x;
-            c2.x = sc.x;
-        } else {
-            c1.x = sc.x;
-            c2.x = tc.x;			
-        }
-        if(tc.y < sc.y) {
-            c1.y = tc.y;
-            c2.y = sc.y;
-        } else {
-            c1.y = sc.y;
-            c2.y = tc.y;			
-        }
-        ol.update(c1, c2);
-        this.c1 = c1;
-        this.c2 = c2;
-        text.settext(String.format(fmt, c2.x - c1.x + 1, c2.y - c1.y + 1));
-    }
+	public boolean mmousewheel(Coord mc, int amount) {
+		return (false);
+	}
 
-    public void wdgmsg(Widget sender, String msg, Object... args) {
-        if(sender == btn) {
-            if((c1 != null) && (c2 != null))
-                wdgmsg("mod", c1, c2);
-            return;
-        }
-        if(sender == cbox) {
-            walkmod = (Boolean)args[0];
-            if(!walkmod) {
-                mv.grab(grab);
-            } else {
-                if(ol != null)
-                    ol.destroy();
-                ol = null;
-                mv.release(grab);
-            }
-            wdgmsg("wm", walkmod?1:0);
-            return;
-        }
-        if(sender == tilenm) {
-            wdgmsg("tilenm", tilenm.text);
-            return;
-        }
-        super.wdgmsg(sender, msg, args);
-    }
+	public boolean mmouseup(Coord mc, int button) {
+		grab.mv = false;
+		ui.grabmouse(null);
+		return (true);
+	}
+
+	public void mmousemove(Coord mc) {
+		Coord tc = mc.div(MCache.tilesz);
+		Coord c1 = new Coord(0, 0), c2 = new Coord(0, 0);
+		if (tc.x < sc.x) {
+			c1.x = tc.x;
+			c2.x = sc.x;
+		} else {
+			c1.x = sc.x;
+			c2.x = tc.x;
+		}
+		if (tc.y < sc.y) {
+			c1.y = tc.y;
+			c2.y = sc.y;
+		} else {
+			c1.y = sc.y;
+			c2.y = tc.y;
+		}
+		ol.update(c1, c2);
+		this.c1 = c1;
+		this.c2 = c2;
+		text.settext(String.format(fmt, c2.x - c1.x + 1, c2.y - c1.y + 1));
+	}
+
+	public void wdgmsg(Widget sender, String msg, Object... args) {
+		if (sender == btn) {
+			if ((c1 != null) && (c2 != null))
+				wdgmsg("mod", c1, c2);
+			return;
+		}
+		if (sender == cbox) {
+			walkmod = (Boolean) args[0];
+			if (!walkmod) {
+				mv.grab(grab);
+			} else {
+				if (ol != null)
+					ol.destroy();
+				ol = null;
+				mv.release(grab);
+			}
+			wdgmsg("wm", walkmod ? 1 : 0);
+			return;
+		}
+		if (sender == tilenm) {
+			wdgmsg("tilenm", tilenm.text);
+			return;
+		}
+		super.wdgmsg(sender, msg, args);
+	}
 }

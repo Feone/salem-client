@@ -30,74 +30,71 @@ import java.awt.Color;
 import static haven.Window.fbox;
 
 public abstract class Listbox<T> extends ListWidget<T> {
-    public final int h;
-    public final Scrollbar sb;
-    public final Color sell = new Color(52, 35, 36);
-    public final Color selr = new Color(178, 93, 91);
+	public final int h;
+	public final Scrollbar sb;
+	public final Color sell = new Color(52, 35, 36);
+	public final Color selr = new Color(178, 93, 91);
 
-    public Listbox(Coord c, Widget parent, int w, int h, int itemh) {
-	super(c, new Coord(w, h * itemh).add(fbox.bisz()), parent, itemh);
-	this.h = h;
-	this.sb = new Scrollbar(new Coord(sz.x - fbox.br.sz().x, fbox.bt.sz().y), sz.y - fbox.bt.sz().y - fbox.bb.sz().y, this, 0, 0);
-    }
-
-    protected void drawsel(GOut g) {
-	g.chcolor(255, 255, 0, 128);
-	g.poly2(Coord.z, sell,
-		new Coord(0, g.sz.y), sell,
-		g.sz, selr,
-		new Coord(g.sz.x, 0), selr);
-	g.chcolor();
-    }
-
-    public void draw(GOut g) {
-	sb.max = listitems() - h;
-	g.chcolor(Color.BLACK);
-	g.frect(Coord.z, sz);
-	g.chcolor();
-	fbox.draw(g, Coord.z, sz);
-	Coord off = fbox.btloff();
-	int n = listitems();
-	for(int i = 0; i < h; i++) {
-	    int idx = i + sb.val;
-	    if(idx >= n)
-		break;
-	    T item = listitem(idx);
-	    int w = sz.x - fbox.bl.sz().x - fbox.br.sz().x - (sb.vis()?sb.sz.x:0);
-	    GOut ig = g.reclip(off.add(0, i * itemh), new Coord(w, itemh));
-	    if(item == sel)
-		drawsel(ig);
-	    drawitem(ig, item);
+	public Listbox(Coord c, Widget parent, int w, int h, int itemh) {
+		super(c, new Coord(w, h * itemh).add(fbox.bisz()), parent, itemh);
+		this.h = h;
+		this.sb = new Scrollbar(new Coord(sz.x - fbox.br.sz().x, fbox.bt.sz().y), sz.y - fbox.bt.sz().y - fbox.bb.sz().y, this, 0, 0);
 	}
-	super.draw(g);
-    }
 
-    public boolean mousewheel(Coord c, int amount) {
-	sb.ch(amount);
-	return(true);
-    }
+	protected void drawsel(GOut g) {
+		g.chcolor(255, 255, 0, 128);
+		g.poly2(Coord.z, sell, new Coord(0, g.sz.y), sell, g.sz, selr, new Coord(g.sz.x, 0), selr);
+		g.chcolor();
+	}
 
-    protected void itemclick(T item, int button) {
-	if(button == 1)
-	    change(item);
-    }
+	public void draw(GOut g) {
+		sb.max = listitems() - h;
+		g.chcolor(Color.BLACK);
+		g.frect(Coord.z, sz);
+		g.chcolor();
+		fbox.draw(g, Coord.z, sz);
+		Coord off = fbox.btloff();
+		int n = listitems();
+		for (int i = 0; i < h; i++) {
+			int idx = i + sb.val;
+			if (idx >= n)
+				break;
+			T item = listitem(idx);
+			int w = sz.x - fbox.bl.sz().x - fbox.br.sz().x - (sb.vis() ? sb.sz.x : 0);
+			GOut ig = g.reclip(off.add(0, i * itemh), new Coord(w, itemh));
+			if (item == sel)
+				drawsel(ig);
+			drawitem(ig, item);
+		}
+		super.draw(g);
+	}
 
-    public T itemat(Coord c) {
-	c = c.sub(fbox.btloff());
-	int idx = (c.y / itemh) + sb.val;
-	if((idx < 0) || (idx >= listitems()))
-	    return(null);
-	return(listitem(idx));
-    }
+	public boolean mousewheel(Coord c, int amount) {
+		sb.ch(amount);
+		return (true);
+	}
 
-    public boolean mousedown(Coord c, int button) {
-	if(super.mousedown(c, button))
-	    return(true);
-	T item = itemat(c);
-	if((item == null) && (button == 1))
-	    change(null);
-	else if(item != null)
-	    itemclick(item, button);
-	return(true);
-    }
+	protected void itemclick(T item, int button) {
+		if (button == 1)
+			change(item);
+	}
+
+	public T itemat(Coord c) {
+		c = c.sub(fbox.btloff());
+		int idx = (c.y / itemh) + sb.val;
+		if ((idx < 0) || (idx >= listitems()))
+			return (null);
+		return (listitem(idx));
+	}
+
+	public boolean mousedown(Coord c, int button) {
+		if (super.mousedown(c, button))
+			return (true);
+		T item = itemat(c);
+		if ((item == null) && (button == 1))
+			change(null);
+		else if (item != null)
+			itemclick(item, button);
+		return (true);
+	}
 }

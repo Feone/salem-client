@@ -33,41 +33,41 @@ import haven.TexGL.TexOb;
 import static haven.GOut.checkerr;
 
 public abstract class TexMS {
-    protected TexOb t = null;
-    public final int w, h, s;
+	protected TexOb t = null;
+	public final int w, h, s;
 
-    public TexMS(int w, int h, int s) {
-	this.w = w;
-	this.h = h;
-	this.s = s;
-    }
-
-    protected abstract void fill(GOut g);
-
-    private void create(GOut g) {
-	GL2 gl = g.gl;
-	t = new TexOb(gl);
-	gl.glBindTexture(GL3.GL_TEXTURE_2D_MULTISAMPLE, t.id);
-	fill(g);
-	checkerr(gl);
-    }
-
-    public int glid(GOut g) {
-	synchronized(this) {
-	    if((t != null) && (t.gl != g.gl))
-		dispose();
-	    if(t == null)
-		create(g);
-	    return(t.id);
+	public TexMS(int w, int h, int s) {
+		this.w = w;
+		this.h = h;
+		this.s = s;
 	}
-    }
 
-    public void dispose() {
-	synchronized(this) {
-	    if(t != null) {
-		t.dispose();
-		t = null;
-	    }
+	protected abstract void fill(GOut g);
+
+	private void create(GOut g) {
+		GL2 gl = g.gl;
+		t = new TexOb(gl);
+		gl.glBindTexture(GL3.GL_TEXTURE_2D_MULTISAMPLE, t.id);
+		fill(g);
+		checkerr(gl);
 	}
-    }
+
+	public int glid(GOut g) {
+		synchronized (this) {
+			if ((t != null) && (t.gl != g.gl))
+				dispose();
+			if (t == null)
+				create(g);
+			return (t.id);
+		}
+	}
+
+	public void dispose() {
+		synchronized (this) {
+			if (t != null) {
+				t.dispose();
+				t = null;
+			}
+		}
+	}
 }

@@ -29,23 +29,23 @@ package haven.glsl;
 import java.util.*;
 
 public class Index extends LValue {
-    public final Expression val;
-    public final Expression idx;
+	public final Expression val;
+	public final Expression idx;
 
-    public Index(Expression val, Expression idx) {
-	this.val = val;
-	this.idx = idx;
-    }
+	public Index(Expression val, Expression idx) {
+		this.val = val;
+		this.idx = idx;
+	}
 
-    public Index process(Context ctx) {
-	return(new Index(val.process(ctx), idx.process(ctx)));
-    }
+	public Index process(Context ctx) {
+		return (new Index(val.process(ctx), idx.process(ctx)));
+	}
 
-    public void output(Output out) {
-	out.write("(");
-	val.output(out);
-	out.write("[");
-	idx.output(out);
-	out.write("])");
-    }
+	public void output(Output out) {
+		out.write("(");
+		val.output(out);
+		out.write("[");
+		idx.output(out);
+		out.write("])");
+	}
 }

@@ -30,67 +30,75 @@ import java.awt.Color;
 import static haven.Window.fbox;
 
 public abstract class Dropbox<T> extends ListWidget<T> {
-    public static final Tex drop = Resource.loadtex("gfx/hud/drop");
-    public final int listh;
-    private final Coord dropc;
-    private Droplist dl;
+	public static final Tex drop = Resource.loadtex("gfx/hud/drop");
+	public final int listh;
+	private final Coord dropc;
+	private Droplist dl;
 
-    public Dropbox(Coord c, Widget parent, int w, int listh, int itemh) {
-	super(c, new Coord(w, itemh).add(fbox.bisz()), parent, itemh);
-	this.listh = listh;
-	dropc = new Coord(sz.x - fbox.bl.sz().x - drop.sz().x, fbox.bt.sz().y);
-    }
-
-    private class Droplist extends Listbox<T> {
-	private Droplist() {
-	    super(Dropbox.this.rootpos().add(0, Dropbox.this.sz.y), Dropbox.this.ui.root, Dropbox.this.sz.x - fbox.bisz().x, Math.min(listh, Dropbox.this.listitems()), Dropbox.this.itemh);
-	    ui.grabmouse(this);
-	    sel = Dropbox.this.sel;
+	public Dropbox(Coord c, Widget parent, int w, int listh, int itemh) {
+		super(c, new Coord(w, itemh).add(fbox.bisz()), parent, itemh);
+		this.listh = listh;
+		dropc = new Coord(sz.x - fbox.bl.sz().x - drop.sz().x, fbox.bt.sz().y);
 	}
 
-	protected T listitem(int i) {return(Dropbox.this.listitem(i));}
-	protected int listitems() {return(Dropbox.this.listitems());}
-	protected void drawitem(GOut g, T item) {Dropbox.this.drawitem(g, item);}
+	private class Droplist extends Listbox<T> {
+		private Droplist() {
+			super(Dropbox.this.rootpos().add(0, Dropbox.this.sz.y), Dropbox.this.ui.root, Dropbox.this.sz.x - fbox.bisz().x, Math.min(listh, Dropbox.this.listitems()), Dropbox.this.itemh);
+			ui.grabmouse(this);
+			sel = Dropbox.this.sel;
+		}
+
+		protected T listitem(int i) {
+			return (Dropbox.this.listitem(i));
+		}
+
+		protected int listitems() {
+			return (Dropbox.this.listitems());
+		}
+
+		protected void drawitem(GOut g, T item) {
+			Dropbox.this.drawitem(g, item);
+		}
+
+		public boolean mousedown(Coord c, int btn) {
+			if (!c.isect(Coord.z, sz)) {
+				reqdestroy();
+				return (true);
+			}
+			return (super.mousedown(c, btn));
+		}
+
+		public void destroy() {
+			ui.grabmouse(null);
+			super.destroy();
+			dl = null;
+		}
+
+		public void change(T item) {
+			Dropbox.this.change(item);
+			reqdestroy();
+		}
+	}
+
+	public void draw(GOut g) {
+		g.chcolor(Color.BLACK);
+		g.frect(Coord.z, sz);
+		g.chcolor();
+		fbox.draw(g, Coord.z, sz);
+		Coord off = fbox.btloff();
+		if (sel != null)
+			drawitem(g.reclip(off, new Coord(sz.x - drop.sz().x, itemh).sub(fbox.bisz())), sel);
+		g.image(drop, dropc);
+		super.draw(g);
+	}
 
 	public boolean mousedown(Coord c, int btn) {
-	    if(!c.isect(Coord.z, sz)) {
-		reqdestroy();
-		return(true);
-	    }
-	    return(super.mousedown(c, btn));
+		if (super.mousedown(c, btn))
+			return (true);
+		if ((dl == null) && (btn == 1)) {
+			dl = new Droplist();
+			return (true);
+		}
+		return (true);
 	}
-
-	public void destroy() {
-	    ui.grabmouse(null);
-	    super.destroy();
-	    dl = null;
-	}
-
-	public void change(T item) {
-	    Dropbox.this.change(item);
-	    reqdestroy();
-	}
-    }
-
-    public void draw(GOut g) {
-	g.chcolor(Color.BLACK);
-	g.frect(Coord.z, sz);
-	g.chcolor();
-	fbox.draw(g, Coord.z, sz);
-	Coord off = fbox.btloff();
-	if(sel != null)
-	    drawitem(g.reclip(off, new Coord(sz.x - drop.sz().x, itemh).sub(fbox.bisz())), sel);
-	g.image(drop, dropc);
-	super.draw(g);
-    }
-
-    public boolean mousedown(Coord c, int btn) {
-	if(super.mousedown(c, btn))
-	    return(true);
-	if((dl == null) && (btn == 1)) {
-	    dl = new Droplist();
-	    return(true);
-	}
-	return(true);
-    }
 }

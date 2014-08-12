@@ -29,192 +29,192 @@ package haven;
 import java.util.*;
 
 public class Fightview extends Widget {
-    static int height = 5;
-    static int iheight = 40;
-    static int ymarg = 2;
-    static int width = 170;
-    static Coord avasz = new Coord(36, 36);
-    static Coord cavac = new Coord(width - Avaview.dasz.x - 10, 10);
-    static Coord cgivec = new Coord(cavac.x - 70, cavac.y);
-    LinkedList<Relation> lsrel = new LinkedList<Relation>();
-    public Relation current = null;
-    public Indir<Resource> blk, batk, iatk;
-    public long atkc = -1;
-    public int off, def;
-    private GiveButton curgive;
-    private FramedAva curava;
-    
-    public class Relation {
-        long gobid;
-        FramedAva ava;
-	GiveButton give;
-        
-        public Relation(long gobid) {
-            this.gobid = gobid;
-            this.ava = new FramedAva(Coord.z, avasz, Fightview.this, gobid, "avacam");
-	    this.give = new GiveButton(Coord.z, Fightview.this, 0, new Coord(30, 30));
-        }
-	
-	public void give(int state) {
-	    if(this == current)
-		curgive.state = state;
-	    this.give.state = state;
-	}
-	
-	public void show(boolean state) {
-	    ava.show(state);
-	    give.show(state);
-	}
-	
-	public void remove() {
-	    ui.destroy(ava);
-	    ui.destroy(give);
-	}
-    }
-    
-    @RName("frv")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    return(new Fightview(c, parent));
-	}
-    }
-    
-    public Fightview(Coord c, Widget parent) {
-        super(c, new Coord(width, (iheight + ymarg) * height), parent);
-    }
+	static int height = 5;
+	static int iheight = 40;
+	static int ymarg = 2;
+	static int width = 170;
+	static Coord avasz = new Coord(36, 36);
+	static Coord cavac = new Coord(width - Avaview.dasz.x - 10, 10);
+	static Coord cgivec = new Coord(cavac.x - 70, cavac.y);
+	LinkedList<Relation> lsrel = new LinkedList<Relation>();
+	public Relation current = null;
+	public Indir<Resource> blk, batk, iatk;
+	public long atkc = -1;
+	public int off, def;
+	private GiveButton curgive;
+	private FramedAva curava;
 
-    private void setcur(Relation rel) {
-	if((current == null) && (rel != null)) {
-	    curgive = new GiveButton(cgivec, this, 0) {
-		    public void wdgmsg(String name, Object... args) {
-			if(name == "click")
-			    Fightview.this.wdgmsg("give", (int)current.gobid, args[0]);
-		    }
-		};
-	    curava = new FramedAva(cavac, Avaview.dasz, this, rel.gobid, "avacam") {
-		    public void wdgmsg(String name, Object... args) {
-			if(name == "click")
-			    Fightview.this.wdgmsg("click", (int)current.gobid, args[0]);
-		    }
-		};
-	} else if((current != null) && (rel == null)) {
-	    ui.destroy(curgive);
-	    ui.destroy(curava);
-	    curgive = null;
-	    curava = null;
-	} else if((current != null) && (rel != null)) {
-	    curgive.state = rel.give.state;
-	    curava.view.avagob = rel.gobid;
-	}
-	current = rel;
-    }
-    
-    public void destroy() {
-	setcur(null);
-	super.destroy();
-    }
-    
-    public void draw(GOut g) {
-        int y = 10;
-	if(curava != null)
-	    y = curava.c.y + curava.sz.y + 10;
-	int x = width - 90;
-        for(Relation rel : lsrel) {
-            if(rel == current) {
-		rel.show(false);
-                continue;
-	    }
-            rel.ava.c = new Coord(x + 45, 4 + y);
-	    rel.give.c = new Coord(x + 5, 4 + y);
-	    rel.show(true);
-            y += iheight + ymarg;
-        }
-        super.draw(g);
-    }
-    
-    public static class Notfound extends RuntimeException {
-        public final long id;
-        
-        public Notfound(long id) {
-            super("No relation for Gob ID " + id + " found");
-            this.id = id;
-        }
-    }
-    
-    private Relation getrel(long gobid) {
-        for(Relation rel : lsrel) {
-            if(rel.gobid == gobid)
-                return(rel);
-        }
-        throw(new Notfound(gobid));
-    }
-    
-    public void wdgmsg(Widget sender, String msg, Object... args) {
-        if(sender instanceof FramedAva) {
-            for(Relation rel : lsrel) {
-                if(rel.ava == sender)
-                    wdgmsg("click", (int)rel.gobid, args[0]);
-            }
-            return;
-        }
-	if(sender instanceof GiveButton) {
-            for(Relation rel : lsrel) {
-                if(rel.give == sender)
-                    wdgmsg("give", (int)rel.gobid, args[0]);
-            }
-            return;
-	}
-        super.wdgmsg(sender, msg, args);
-    }
-    
-    private Indir<Resource> n2r(int num) {
-	if(num < 0)
-	    return(null);
-	return(ui.sess.getres(num));
-    }
+	public class Relation {
+		long gobid;
+		FramedAva ava;
+		GiveButton give;
 
-    public void uimsg(String msg, Object... args) {
-        if(msg == "new") {
-            Relation rel = new Relation((Integer)args[0]);
-	    rel.give((Integer)args[1]);
-            lsrel.addFirst(rel);
-            return;
-        } else if(msg == "del") {
-            Relation rel = getrel((Integer)args[0]);
-	    rel.remove();
-            lsrel.remove(rel);
-	    if(rel == current)
-		setcur(null);
-            return;
-        } else if(msg == "upd") {
-            Relation rel = getrel((Integer)args[0]);
-	    rel.give((Integer)args[1]);
-            return;
-        } else if(msg == "cur") {
-            try {
-                Relation rel = getrel((Integer)args[0]);
-                lsrel.remove(rel);
-                lsrel.addFirst(rel);
-		setcur(rel);
-            } catch(Notfound e) {
-		setcur(null);
-	    }
-            return;
-        } else if(msg == "atkc") {
-	    atkc = System.currentTimeMillis() + (((Integer)args[0]) * 60);
-	    return;
-	} else if(msg == "blk") {
-	    blk = n2r((Integer)args[0]);
-	    return;
-	} else if(msg == "atk") {
-	    batk = n2r((Integer)args[0]);
-	    iatk = n2r((Integer)args[1]);
-	    return;
-        } else if(msg == "offdef") {
-	    off = (Integer)args[0];
-	    def = (Integer)args[1];
-	    return;
+		public Relation(long gobid) {
+			this.gobid = gobid;
+			this.ava = new FramedAva(Coord.z, avasz, Fightview.this, gobid, "avacam");
+			this.give = new GiveButton(Coord.z, Fightview.this, 0, new Coord(30, 30));
+		}
+
+		public void give(int state) {
+			if (this == current)
+				curgive.state = state;
+			this.give.state = state;
+		}
+
+		public void show(boolean state) {
+			ava.show(state);
+			give.show(state);
+		}
+
+		public void remove() {
+			ui.destroy(ava);
+			ui.destroy(give);
+		}
 	}
-        super.uimsg(msg, args);
-    }
+
+	@RName("frv")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			return (new Fightview(c, parent));
+		}
+	}
+
+	public Fightview(Coord c, Widget parent) {
+		super(c, new Coord(width, (iheight + ymarg) * height), parent);
+	}
+
+	private void setcur(Relation rel) {
+		if ((current == null) && (rel != null)) {
+			curgive = new GiveButton(cgivec, this, 0) {
+				public void wdgmsg(String name, Object... args) {
+					if (name == "click")
+						Fightview.this.wdgmsg("give", (int) current.gobid, args[0]);
+				}
+			};
+			curava = new FramedAva(cavac, Avaview.dasz, this, rel.gobid, "avacam") {
+				public void wdgmsg(String name, Object... args) {
+					if (name == "click")
+						Fightview.this.wdgmsg("click", (int) current.gobid, args[0]);
+				}
+			};
+		} else if ((current != null) && (rel == null)) {
+			ui.destroy(curgive);
+			ui.destroy(curava);
+			curgive = null;
+			curava = null;
+		} else if ((current != null) && (rel != null)) {
+			curgive.state = rel.give.state;
+			curava.view.avagob = rel.gobid;
+		}
+		current = rel;
+	}
+
+	public void destroy() {
+		setcur(null);
+		super.destroy();
+	}
+
+	public void draw(GOut g) {
+		int y = 10;
+		if (curava != null)
+			y = curava.c.y + curava.sz.y + 10;
+		int x = width - 90;
+		for (Relation rel : lsrel) {
+			if (rel == current) {
+				rel.show(false);
+				continue;
+			}
+			rel.ava.c = new Coord(x + 45, 4 + y);
+			rel.give.c = new Coord(x + 5, 4 + y);
+			rel.show(true);
+			y += iheight + ymarg;
+		}
+		super.draw(g);
+	}
+
+	public static class Notfound extends RuntimeException {
+		public final long id;
+
+		public Notfound(long id) {
+			super("No relation for Gob ID " + id + " found");
+			this.id = id;
+		}
+	}
+
+	private Relation getrel(long gobid) {
+		for (Relation rel : lsrel) {
+			if (rel.gobid == gobid)
+				return (rel);
+		}
+		throw (new Notfound(gobid));
+	}
+
+	public void wdgmsg(Widget sender, String msg, Object... args) {
+		if (sender instanceof FramedAva) {
+			for (Relation rel : lsrel) {
+				if (rel.ava == sender)
+					wdgmsg("click", (int) rel.gobid, args[0]);
+			}
+			return;
+		}
+		if (sender instanceof GiveButton) {
+			for (Relation rel : lsrel) {
+				if (rel.give == sender)
+					wdgmsg("give", (int) rel.gobid, args[0]);
+			}
+			return;
+		}
+		super.wdgmsg(sender, msg, args);
+	}
+
+	private Indir<Resource> n2r(int num) {
+		if (num < 0)
+			return (null);
+		return (ui.sess.getres(num));
+	}
+
+	public void uimsg(String msg, Object... args) {
+		if (msg == "new") {
+			Relation rel = new Relation((Integer) args[0]);
+			rel.give((Integer) args[1]);
+			lsrel.addFirst(rel);
+			return;
+		} else if (msg == "del") {
+			Relation rel = getrel((Integer) args[0]);
+			rel.remove();
+			lsrel.remove(rel);
+			if (rel == current)
+				setcur(null);
+			return;
+		} else if (msg == "upd") {
+			Relation rel = getrel((Integer) args[0]);
+			rel.give((Integer) args[1]);
+			return;
+		} else if (msg == "cur") {
+			try {
+				Relation rel = getrel((Integer) args[0]);
+				lsrel.remove(rel);
+				lsrel.addFirst(rel);
+				setcur(rel);
+			} catch (Notfound e) {
+				setcur(null);
+			}
+			return;
+		} else if (msg == "atkc") {
+			atkc = System.currentTimeMillis() + (((Integer) args[0]) * 60);
+			return;
+		} else if (msg == "blk") {
+			blk = n2r((Integer) args[0]);
+			return;
+		} else if (msg == "atk") {
+			batk = n2r((Integer) args[0]);
+			iatk = n2r((Integer) args[1]);
+			return;
+		} else if (msg == "offdef") {
+			off = (Integer) args[0];
+			def = (Integer) args[1];
+			return;
+		}
+		super.uimsg(msg, args);
+	}
 }

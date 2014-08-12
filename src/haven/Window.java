@@ -33,220 +33,208 @@ import java.util.*;
 import static haven.PUtils.*;
 
 public class Window extends Widget implements DTarget {
-    private static final Tex tleft = Resource.loadtex("gfx/hud/wnd/tleft");
-    private static final Tex tmain = Resource.loadtex("gfx/hud/wnd/tmain");
-    private static final Tex tright = Resource.loadtex("gfx/hud/wnd/tright");
-    public static final BufferedImage[] cbtni = new BufferedImage[] {
-	Resource.loadimg("gfx/hud/wnd/cbtn"),
-	Resource.loadimg("gfx/hud/wnd/cbtnd"),
-	Resource.loadimg("gfx/hud/wnd/cbtnh")};
-    public static final BufferedImage[] lbtni = new BufferedImage[] {
-	Resource.loadimg("gfx/hud/wnd/lbtn"),
-	Resource.loadimg("gfx/hud/wnd/lbtnd"),
-	Resource.loadimg("gfx/hud/wnd/lbtnh")};
-    public static final BufferedImage[] rbtni = new BufferedImage[] {
-	Resource.loadimg("gfx/hud/wnd/rbtn"),
-	Resource.loadimg("gfx/hud/wnd/rbtnd"),
-	Resource.loadimg("gfx/hud/wnd/rbtnh")};
-    public static final Color cc = new Color(248, 230, 190);
-    public static final Text.Furnace cf = new Text.Imager(new Text.Foundry(new Font("Serif", Font.BOLD, 15), cc).aa(true)) {
-	    protected BufferedImage proc(Text text) {
-		return(rasterimg(blurmask2(text.img.getRaster(), 1, 1, Color.BLACK)));
-	    }
+	private static final Tex tleft = Resource.loadtex("gfx/hud/wnd/tleft");
+	private static final Tex tmain = Resource.loadtex("gfx/hud/wnd/tmain");
+	private static final Tex tright = Resource.loadtex("gfx/hud/wnd/tright");
+	public static final BufferedImage[] cbtni = new BufferedImage[] { Resource.loadimg("gfx/hud/wnd/cbtn"), Resource.loadimg("gfx/hud/wnd/cbtnd"), Resource.loadimg("gfx/hud/wnd/cbtnh") };
+	public static final BufferedImage[] lbtni = new BufferedImage[] { Resource.loadimg("gfx/hud/wnd/lbtn"), Resource.loadimg("gfx/hud/wnd/lbtnd"), Resource.loadimg("gfx/hud/wnd/lbtnh") };
+	public static final BufferedImage[] rbtni = new BufferedImage[] { Resource.loadimg("gfx/hud/wnd/rbtn"), Resource.loadimg("gfx/hud/wnd/rbtnd"), Resource.loadimg("gfx/hud/wnd/rbtnh") };
+	public static final Color cc = new Color(248, 230, 190);
+	public static final Text.Furnace cf = new Text.Imager(new Text.Foundry(new Font("Serif", Font.BOLD, 15), cc).aa(true)) {
+		protected BufferedImage proc(Text text) {
+			return (rasterimg(blurmask2(text.img.getRaster(), 1, 1, Color.BLACK)));
+		}
 	};
-    public static final IBox fbox = new IBox("gfx/hud", "ftl", "ftr", "fbl", "fbr", "fl", "fr", "ft", "fb");
-    public static final IBox swbox = new IBox("gfx/hud", "stl", "str", "sbl", "sbr", "sl", "sr", "st", "sb");
-    public static final IBox wbox = new IBox("gfx/hud/wnd", "tl", "tr", "bl", "br", "vl", "vr", "ht", "hb");
-    private static final IBox topless = new IBox(Tex.empty, Tex.empty, wbox.cbl, wbox.cbr, wbox.bl, wbox.br, Tex.empty, wbox.bb);
-    private static final int th = tleft.sz().y, tdh = th - tmain.sz().y, tc = tdh + 18;
-    private static final Coord capc = new Coord(20, th - 3);
-    public Coord mrgn = new Coord(10, 10);
-    private final Text cap;
-    private boolean dt = false;
-    private boolean dm = false;
-    public Coord ctl, csz, atl, asz;
-    private Coord doff;
-    private final IButton cbtn;
-    private final Collection<Widget> twdgs = new LinkedList<Widget>();
+	public static final IBox fbox = new IBox("gfx/hud", "ftl", "ftr", "fbl", "fbr", "fl", "fr", "ft", "fb");
+	public static final IBox swbox = new IBox("gfx/hud", "stl", "str", "sbl", "sbr", "sl", "sr", "st", "sb");
+	public static final IBox wbox = new IBox("gfx/hud/wnd", "tl", "tr", "bl", "br", "vl", "vr", "ht", "hb");
+	private static final IBox topless = new IBox(Tex.empty, Tex.empty, wbox.cbl, wbox.cbr, wbox.bl, wbox.br, Tex.empty, wbox.bb);
+	private static final int th = tleft.sz().y, tdh = th - tmain.sz().y, tc = tdh + 18;
+	private static final Coord capc = new Coord(20, th - 3);
+	public Coord mrgn = new Coord(10, 10);
+	private final Text cap;
+	private boolean dt = false;
+	private boolean dm = false;
+	public Coord ctl, csz, atl, asz;
+	private Coord doff;
+	private final IButton cbtn;
+	private final Collection<Widget> twdgs = new LinkedList<Widget>();
 
-    @RName("wnd")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    if(args.length < 2)
-		return(new Window(c, (Coord)args[0], parent, null));
-	    else
-		return(new Window(c, (Coord)args[0], parent, (String)args[1]));
+	@RName("wnd")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			if (args.length < 2)
+				return (new Window(c, (Coord) args[0], parent, null));
+			else
+				return (new Window(c, (Coord) args[0], parent, (String) args[1]));
+		}
 	}
-    }
 
-    public Window(Coord c, Coord sz, Widget parent, String cap) {
-	super(c, new Coord(0, 0), parent);
-	if(cap != null)
-	    this.cap = cf.render(cap);
-	else
-	    this.cap = null;
-	resize(sz);
-	setfocustab(true);
-	parent.setfocus(this);
-	cbtn = new IButton(Coord.z, this, cbtni[0], cbtni[1], cbtni[2]);
-	addtwdg(cbtn);
-    }
-
-    public Coord contentsz() {
-	Coord max = new Coord(0, 0);
-	for(Widget wdg = child; wdg != null; wdg = wdg.next) {
-	    if(twdgs.contains(wdg))
-		continue;
-	    if(!wdg.visible)
-		continue;
-	    Coord br = wdg.c.add(wdg.sz);
-	    if(br.x > max.x)
-		max.x = br.x;
-	    if(br.y > max.y)
-		max.y = br.y;
+	public Window(Coord c, Coord sz, Widget parent, String cap) {
+		super(c, new Coord(0, 0), parent);
+		if (cap != null)
+			this.cap = cf.render(cap);
+		else
+			this.cap = null;
+		resize(sz);
+		setfocustab(true);
+		parent.setfocus(this);
+		cbtn = new IButton(Coord.z, this, cbtni[0], cbtni[1], cbtni[2]);
+		addtwdg(cbtn);
 	}
-	return(max.sub(1, 1));
-    }
 
-    private void placetwdgs() {
-	int x = sz.x - 5;
-	for(Widget ch : twdgs)
-	    ch.c = xlate(new Coord(x -= ch.sz.x + 5, tc - (ch.sz.y / 2)), false);
-    }
-
-    public void addtwdg(Widget wdg) {
-	twdgs.add(wdg);
-	placetwdgs();
-    }
-
-    public void resize(Coord sz) {
-	sz = sz.add(topless.bisz()).add(0, th).add(mrgn.mul(2));
-	this.sz = sz;
-	ctl = topless.btloff().add(0, th);
-	csz = sz.sub(topless.bisz()).sub(0, th);
-	atl = ctl.add(mrgn);
-	asz = csz.sub(mrgn.mul(2));
-	placetwdgs();
-	for(Widget ch = child; ch != null; ch = ch.next)
-	    ch.presize();
-    }
-
-    public Coord xlate(Coord c, boolean in) {
-	if(in)
-	    return(c.add(atl));
-	else
-	    return(c.sub(atl));
-    }
-
-    public void cdraw(GOut g) {
-    }
-
-    public void draw(GOut g) {
-	g.chcolor(0, 0, 0, 192);
-	g.frect(ctl, csz);
-	g.chcolor();
-	cdraw(g.reclip(xlate(Coord.z, true), asz));
-	topless.draw(g, new Coord(0, th), sz.sub(0, th));
-	g.image(tleft, Coord.z);
-	Coord tmul = new Coord(tleft.sz().x, tdh);
-	Coord tmbr = new Coord(sz.x - tright.sz().x, th);
-	for(int x = tmul.x; x < tmbr.x; x += tmain.sz().x) {
-	    g.image(tmain, new Coord(x, tdh), tmul, tmbr);
+	public Coord contentsz() {
+		Coord max = new Coord(0, 0);
+		for (Widget wdg = child; wdg != null; wdg = wdg.next) {
+			if (twdgs.contains(wdg))
+				continue;
+			if (!wdg.visible)
+				continue;
+			Coord br = wdg.c.add(wdg.sz);
+			if (br.x > max.x)
+				max.x = br.x;
+			if (br.y > max.y)
+				max.y = br.y;
+		}
+		return (max.sub(1, 1));
 	}
-	g.image(tright, new Coord(sz.x - tright.sz().x, tdh));
-	if(cap != null)
-	    g.image(cap.tex(), capc.sub(0, cap.sz().y));
-	/*
-	if(cap != null) {
-	    GOut cg = og.reclip(new Coord(0, -7), sz.add(0, 7));
-	    int w = cap.tex().sz().x;
-	    cg.image(cl, new Coord((sz.x / 2) - (w / 2) - cl.sz().x, 0));
-	    cg.image(cm, new Coord((sz.x / 2) - (w / 2), 0), new Coord(w, cm.sz().y));
-	    cg.image(cr, new Coord((sz.x / 2) + (w / 2), 0));
-	    cg.image(cap.tex(), new Coord((sz.x / 2) - (w / 2), 0));
+
+	private void placetwdgs() {
+		int x = sz.x - 5;
+		for (Widget ch : twdgs)
+			ch.c = xlate(new Coord(x -= ch.sz.x + 5, tc - (ch.sz.y / 2)), false);
 	}
-	*/
-	super.draw(g);
-    }
 
-    public void uimsg(String msg, Object... args) {
-	if(msg == "pack") {
-	    pack();
-	} else if(msg == "dt") {
-	    dt = (Integer)args[0] != 0;
-	} else {
-	    super.uimsg(msg, args);
+	public void addtwdg(Widget wdg) {
+		twdgs.add(wdg);
+		placetwdgs();
 	}
-    }
 
-    public boolean mousedown(Coord c, int button) {
-	parent.setfocus(this);
-	raise();
-	if(super.mousedown(c, button))
-	    return(true);
-	if(c.y < tdh)
-	    return(false);
-	if(button == 1) {
-	    ui.grabmouse(this);
-	    dm = true;
-	    doff = c;
+	public void resize(Coord sz) {
+		sz = sz.add(topless.bisz()).add(0, th).add(mrgn.mul(2));
+		this.sz = sz;
+		ctl = topless.btloff().add(0, th);
+		csz = sz.sub(topless.bisz()).sub(0, th);
+		atl = ctl.add(mrgn);
+		asz = csz.sub(mrgn.mul(2));
+		placetwdgs();
+		for (Widget ch = child; ch != null; ch = ch.next)
+			ch.presize();
 	}
-	return(true);
-    }
 
-    public boolean mouseup(Coord c, int button) {
-	if(dm) {
-	    ui.grabmouse(null);
-	    dm = false;
-	} else {
-	    super.mouseup(c, button);
+	public Coord xlate(Coord c, boolean in) {
+		if (in)
+			return (c.add(atl));
+		else
+			return (c.sub(atl));
 	}
-	return(true);
-    }
 
-    public void mousemove(Coord c) {
-	if(dm) {
-	    this.c = this.c.add(c.add(doff.inv()));
-	} else {
-	    super.mousemove(c);
+	public void cdraw(GOut g) {
 	}
-    }
 
-    public void wdgmsg(Widget sender, String msg, Object... args) {
-	if(sender == cbtn) {
-	    wdgmsg("close");
-	} else {
-	    super.wdgmsg(sender, msg, args);
+	public void draw(GOut g) {
+		g.chcolor(0, 0, 0, 192);
+		g.frect(ctl, csz);
+		g.chcolor();
+		cdraw(g.reclip(xlate(Coord.z, true), asz));
+		topless.draw(g, new Coord(0, th), sz.sub(0, th));
+		g.image(tleft, Coord.z);
+		Coord tmul = new Coord(tleft.sz().x, tdh);
+		Coord tmbr = new Coord(sz.x - tright.sz().x, th);
+		for (int x = tmul.x; x < tmbr.x; x += tmain.sz().x) {
+			g.image(tmain, new Coord(x, tdh), tmul, tmbr);
+		}
+		g.image(tright, new Coord(sz.x - tright.sz().x, tdh));
+		if (cap != null)
+			g.image(cap.tex(), capc.sub(0, cap.sz().y));
+		/*
+		 * if(cap != null) { GOut cg = og.reclip(new Coord(0, -7), sz.add(0,
+		 * 7)); int w = cap.tex().sz().x; cg.image(cl, new Coord((sz.x / 2) - (w
+		 * / 2) - cl.sz().x, 0)); cg.image(cm, new Coord((sz.x / 2) - (w / 2),
+		 * 0), new Coord(w, cm.sz().y)); cg.image(cr, new Coord((sz.x / 2) + (w
+		 * / 2), 0)); cg.image(cap.tex(), new Coord((sz.x / 2) - (w / 2), 0)); }
+		 */
+		super.draw(g);
 	}
-    }
 
-    public boolean type(char key, java.awt.event.KeyEvent ev) {
-	if(super.type(key, ev))
-	    return(true);
-	if(key == 27) {
-	    wdgmsg("close");
-	    return(true);
+	public void uimsg(String msg, Object... args) {
+		if (msg == "pack") {
+			pack();
+		} else if (msg == "dt") {
+			dt = (Integer) args[0] != 0;
+		} else {
+			super.uimsg(msg, args);
+		}
 	}
-	return(false);
-    }
 
-    public boolean drop(Coord cc, Coord ul) {
-	if(dt) {
-	    wdgmsg("drop", cc);
-	    return(true);
+	public boolean mousedown(Coord c, int button) {
+		parent.setfocus(this);
+		raise();
+		if (super.mousedown(c, button))
+			return (true);
+		if (c.y < tdh)
+			return (false);
+		if (button == 1) {
+			ui.grabmouse(this);
+			dm = true;
+			doff = c;
+		}
+		return (true);
 	}
-	return(false);
-    }
 
-    public boolean iteminteract(Coord cc, Coord ul) {
-	return(false);
-    }
+	public boolean mouseup(Coord c, int button) {
+		if (dm) {
+			ui.grabmouse(null);
+			dm = false;
+		} else {
+			super.mouseup(c, button);
+		}
+		return (true);
+	}
 
-    public Object tooltip(Coord c, Widget prev) {
-	Object ret = super.tooltip(c, prev);
-	if(ret != null)
-	    return(ret);
-	else
-	    return("");
-    }
+	public void mousemove(Coord c) {
+		if (dm) {
+			this.c = this.c.add(c.add(doff.inv()));
+		} else {
+			super.mousemove(c);
+		}
+	}
+
+	public void wdgmsg(Widget sender, String msg, Object... args) {
+		if (sender == cbtn) {
+			wdgmsg("close");
+		} else {
+			super.wdgmsg(sender, msg, args);
+		}
+	}
+
+	public boolean type(char key, java.awt.event.KeyEvent ev) {
+		if (super.type(key, ev))
+			return (true);
+		if (key == 27) {
+			wdgmsg("close");
+			return (true);
+		}
+		return (false);
+	}
+
+	public boolean drop(Coord cc, Coord ul) {
+		if (dt) {
+			wdgmsg("drop", cc);
+			return (true);
+		}
+		return (false);
+	}
+
+	public boolean iteminteract(Coord cc, Coord ul) {
+		return (false);
+	}
+
+	public Object tooltip(Coord c, Widget prev) {
+		Object ret = super.tooltip(c, prev);
+		if (ret != null)
+			return (ret);
+		else
+			return ("");
+	}
 }

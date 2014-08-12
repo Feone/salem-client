@@ -29,35 +29,52 @@ package haven.glsl;
 import java.util.*;
 
 public abstract class LPreOp extends Expression {
-    public final LValue op;
+	public final LValue op;
 
-    public LPreOp(LValue op) {
-	this.op = op;
-    }
-
-    public LPreOp process(Context ctx) {
-	try {
-	    return(this.getClass().getConstructor(LValue.class).newInstance(op.process(ctx)));
-	} catch(NoSuchMethodException e) {
-	    throw(new Error(e));
-	} catch(InstantiationException e) {
-	    throw(new Error(e));
-	} catch(IllegalAccessException e) {
-	    throw(new Error(e));
-	} catch(java.lang.reflect.InvocationTargetException e) {
-	    throw(new Error(e));
+	public LPreOp(LValue op) {
+		this.op = op;
 	}
-    }
 
-    public abstract String form();
+	public LPreOp process(Context ctx) {
+		try {
+			return (this.getClass().getConstructor(LValue.class).newInstance(op.process(ctx)));
+		} catch (NoSuchMethodException e) {
+			throw (new Error(e));
+		} catch (InstantiationException e) {
+			throw (new Error(e));
+		} catch (IllegalAccessException e) {
+			throw (new Error(e));
+		} catch (java.lang.reflect.InvocationTargetException e) {
+			throw (new Error(e));
+		}
+	}
 
-    public void output(Output out) {
-	out.write("(");
-	out.write(form());
-	op.output(out);
-	out.write(")");
-    }
+	public abstract String form();
 
-    public static class Inc extends LPreOp {public String form() {return("++");} public Inc(LValue op) {super(op);}}
-    public static class Dec extends LPreOp {public String form() {return("--");} public Dec(LValue op) {super(op);}}
+	public void output(Output out) {
+		out.write("(");
+		out.write(form());
+		op.output(out);
+		out.write(")");
+	}
+
+	public static class Inc extends LPreOp {
+		public String form() {
+			return ("++");
+		}
+
+		public Inc(LValue op) {
+			super(op);
+		}
+	}
+
+	public static class Dec extends LPreOp {
+		public String form() {
+			return ("--");
+		}
+
+		public Dec(LValue op) {
+			super(op);
+		}
+	}
 }

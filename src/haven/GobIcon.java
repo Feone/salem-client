@@ -31,34 +31,34 @@ import java.awt.Color;
 import java.awt.image.*;
 
 public class GobIcon extends GAttrib {
-    public static final PUtils.Convolution filter = new PUtils.Hanning(1);
-    private static final Map<Indir<Resource>, Tex> cache = new WeakHashMap<Indir<Resource>, Tex>();
-    public final Indir<Resource> res;
-    private Tex tex;
+	public static final PUtils.Convolution filter = new PUtils.Hanning(1);
+	private static final Map<Indir<Resource>, Tex> cache = new WeakHashMap<Indir<Resource>, Tex>();
+	public final Indir<Resource> res;
+	private Tex tex;
 
-    public GobIcon(Gob g, Indir<Resource> res) {
-	super(g);
-	this.res = res;
-    }
-
-    public Tex tex() {
-	if(this.tex == null) {
-	    synchronized(cache) {
-		if(!cache.containsKey(res)) {
-		    Resource.Image img = res.get().layer(Resource.imgc);
-		    Tex tex = img.tex();
-		    if((tex.sz().x <= 20) && (tex.sz().y <= 20)) {
-			cache.put(res, tex);
-		    } else {
-			BufferedImage buf = img.img;
-			buf = PUtils.rasterimg(PUtils.blurmask2(buf.getRaster(), 1, 1, Color.BLACK));
-			buf = PUtils.convolvedown(buf, new Coord(20, 20), filter);
-			cache.put(res, new TexI(buf));
-		    }
-		}
-		this.tex = cache.get(res);
-	    }
+	public GobIcon(Gob g, Indir<Resource> res) {
+		super(g);
+		this.res = res;
 	}
-	return(this.tex);
-    }
+
+	public Tex tex() {
+		if (this.tex == null) {
+			synchronized (cache) {
+				if (!cache.containsKey(res)) {
+					Resource.Image img = res.get().layer(Resource.imgc);
+					Tex tex = img.tex();
+					if ((tex.sz().x <= 20) && (tex.sz().y <= 20)) {
+						cache.put(res, tex);
+					} else {
+						BufferedImage buf = img.img;
+						buf = PUtils.rasterimg(PUtils.blurmask2(buf.getRaster(), 1, 1, Color.BLACK));
+						buf = PUtils.convolvedown(buf, new Coord(20, 20), filter);
+						cache.put(res, new TexI(buf));
+					}
+				}
+				this.tex = cache.get(res);
+			}
+		}
+		return (this.tex);
+	}
 }

@@ -30,52 +30,52 @@ import java.awt.Color;
 import javax.media.opengl.*;
 
 public class SpotLight extends PosLight {
-    public float[] dir;
-    public float exp, cut;
+	public float[] dir;
+	public float exp, cut;
 
-    private static final float[] defdir = {0.0f, 0.0f, -1.0f};
+	private static final float[] defdir = { 0.0f, 0.0f, -1.0f };
 
-    public SpotLight(FColor col, Coord3f pos, Coord3f dir, float exp) {
-	super(col, pos);
-	this.dir = dir.to3a();
-	this.exp = exp;
-	this.cut = 90.0f;
-    }
+	public SpotLight(FColor col, Coord3f pos, Coord3f dir, float exp) {
+		super(col, pos);
+		this.dir = dir.to3a();
+		this.exp = exp;
+		this.cut = 90.0f;
+	}
 
-    public SpotLight(Color col, Coord3f pos, Coord3f dir, float exp) {
-	super(col, pos);
-	this.dir = dir.to3a();
-	this.exp = exp;
-	this.cut = 90.0f;
-    }
+	public SpotLight(Color col, Coord3f pos, Coord3f dir, float exp) {
+		super(col, pos);
+		this.dir = dir.to3a();
+		this.exp = exp;
+		this.cut = 90.0f;
+	}
 
-    public SpotLight(FColor amb, FColor dif, FColor spc, Coord3f pos, Coord3f dir, float exp) {
-	super(amb, dif, spc, pos);
-	this.dir = dir.norm().to3a();
-	this.exp = exp;
-	this.cut = 90.0f;
-    }
+	public SpotLight(FColor amb, FColor dif, FColor spc, Coord3f pos, Coord3f dir, float exp) {
+		super(amb, dif, spc, pos);
+		this.dir = dir.norm().to3a();
+		this.exp = exp;
+		this.cut = 90.0f;
+	}
 
-    public SpotLight(Color amb, Color dif, Color spc, Coord3f pos, Coord3f dir, float exp) {
-	super(amb, dif, spc, pos);
-	this.dir = dir.norm().to3a();
-	this.exp = exp;
-	this.cut = 90.0f;
-    }
+	public SpotLight(Color amb, Color dif, Color spc, Coord3f pos, Coord3f dir, float exp) {
+		super(amb, dif, spc, pos);
+		this.dir = dir.norm().to3a();
+		this.exp = exp;
+		this.cut = 90.0f;
+	}
 
-    public void enable(GOut g, int idx) {
-	super.enable(g, idx);
-	GL2 gl = g.gl;
-	gl.glLightfv(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_DIRECTION, dir, 0);
-	gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_EXPONENT, exp);
-	gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_CUTOFF, cut);
-    }
+	public void enable(GOut g, int idx) {
+		super.enable(g, idx);
+		GL2 gl = g.gl;
+		gl.glLightfv(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_DIRECTION, dir, 0);
+		gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_EXPONENT, exp);
+		gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_CUTOFF, cut);
+	}
 
-    public void disable(GOut g, int idx) {
-	GL2 gl = g.gl;
-	gl.glLightfv(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_DIRECTION, defdir, 0);
-	gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_EXPONENT, 0.0f);
-	gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_CUTOFF, 180.0f);
-	super.disable(g, idx);
-    }
+	public void disable(GOut g, int idx) {
+		GL2 gl = g.gl;
+		gl.glLightfv(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_DIRECTION, defdir, 0);
+		gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_EXPONENT, 0.0f);
+		gl.glLightf(GL2.GL_LIGHT0 + idx, GL2.GL_SPOT_CUTOFF, 180.0f);
+		super.disable(g, idx);
+	}
 }

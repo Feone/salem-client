@@ -35,68 +35,74 @@ import static haven.glsl.Type.*;
 import haven.glsl.ValBlock.Value;
 
 public class TexPal extends GLState {
-    public static final Slot<TexPal> slot = new Slot<TexPal>(Slot.Type.DRAW, TexPal.class);
-    public final TexGL tex;
+	public static final Slot<TexPal> slot = new Slot<TexPal>(Slot.Type.DRAW, TexPal.class);
+	public final TexGL tex;
 
-    public TexPal(TexGL tex) {
-	this.tex = tex;
-    }
-
-    private static final Uniform ctex = new Uniform(SAMPLER2D);
-    private static final ShaderMacro[] shaders = {new ShaderMacro() {
-	    public void modify(ProgramContext prog) {
-		Tex2D.tex2d(prog.fctx).mod(new Macro1<Expression>() {
-			public Expression expand(Expression in) {
-			    return(texture2D(ctex.ref(), pick(in, "rg")));
-			}
-		    }, -100);
-	    }
-	}};
-
-    public ShaderMacro[] shaders() {return(shaders);}
-    public boolean reqshaders() {return(true);}
-
-    private TexUnit sampler;
-
-    public void reapply(GOut g) {
-    }
-
-    public void apply(GOut g) {
-	sampler = TexGL.lbind(g, tex);
-	reapply(g);
-    }
-
-    public void unapply(GOut g) {
-	sampler.ufree(); sampler = null;
-    }
-
-    public void prep(Buffer buf) {
-	buf.put(slot, this);
-    }
-
-    @Material.ResName("pal")
-    public static class $res implements Material.ResCons2 {
-	public void cons(final Resource res, List<GLState> states, List<Material.Res.Resolver> left, Object... args) {
-	    final Resource tres;
-	    final int tid;
-	    int a = 0;
-	    if(args[a] instanceof String) {
-		tres = Resource.load((String)args[a], (Integer)args[a + 1]);
-		tid = (Integer)args[a + 2];
-		a += 3;
-	    } else {
-		tres = res;
-		tid = (Integer)args[a];
-		a += 1;
-	    }
-	    left.add(new Material.Res.Resolver() {
-		    public void resolve(Collection<GLState> buf) {
-			TexR rt = tres.layer(TexR.class, tid);
-			if(rt == null)
-			    throw(new RuntimeException(String.format("Specified texture %d for %s not found in %s", tid, res, tres)));
-			buf.add(new TexPal((TexGL)rt.tex()));
-		    }
-		});
+	public TexPal(TexGL tex) {
+		this.tex = tex;
 	}
-    }
+
+	private static final Uniform ctex = new Uniform(SAMPLER2D);
+	private static final ShaderMacro[] shaders = { new ShaderMacro() {
+		public void modify(ProgramContext prog) {
+			Tex2D.tex2d(prog.fctx).mod(new Macro1<Expression>() {
+				public Expression expand(Expression in) {
+					return (texture2D(ctex.ref(), pick(in, "rg")));
+				}
+			}, -100);
+		}
+	} };
+
+	public ShaderMacro[] shaders() {
+		return (shaders);
+	}
+
+	public boolean reqshaders() {
+		return (true);
+	}
+
+	private TexUnit sampler;
+
+	public void reapply(GOut g) {
+	}
+
+	public void apply(GOut g) {
+		sampler = TexGL.lbind(g, tex);
+		reapply(g);
+	}
+
+	public void unapply(GOut g) {
+		sampler.ufree();
+		sampler = null;
+	}
+
+	public void prep(Buffer buf) {
+		buf.put(slot, this);
+	}
+
+	@Material.ResName("pal")
+	public static class $res implements Material.ResCons2 {
+		public void cons(final Resource res, List<GLState> states, List<Material.Res.Resolver> left, Object... args) {
+			final Resource tres;
+			final int tid;
+			int a = 0;
+			if (args[a] instanceof String) {
+				tres = Resource.load((String) args[a], (Integer) args[a + 1]);
+				tid = (Integer) args[a + 2];
+				a += 3;
+			} else {
+				tres = res;
+				tid = (Integer) args[a];
+				a += 1;
+			}
+			left.add(new Material.Res.Resolver() {
+				public void resolve(Collection<GLState> buf) {
+					TexR rt = tres.layer(TexR.class, tid);
+					if (rt == null)
+						throw (new RuntimeException(String.format("Specified texture %d for %s not found in %s", tid, res, tres)));
+					buf.add(new TexPal((TexGL) rt.tex()));
+				}
+			});
+		}
+	}
 }

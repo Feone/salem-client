@@ -31,65 +31,60 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
 public class Alchemy extends ItemInfo.Tip {
-    public static final Color[] colors = {
-	new Color(255, 0, 0),
-	new Color(0, 255, 0),
-	new Color(0, 128, 255),
-	new Color(255, 255, 0),
-    };
-    public static final String[] names = {"Salt", "Mercury", "Sulphur", "Lead"};
-    public static final String[] tcolors;
-    public final int[] a;
-    
-    static {
-	String[] buf = new String[colors.length];
-	for(int i = 0; i < colors.length; i++)
-	    buf[i] = String.format("%d,%d,%d", colors[i].getRed(), colors[i].getGreen(), colors[i].getBlue());
-	tcolors = buf;
-    }
-    
-    public enum Element {
-	SALT, MERC, SULF, LEAD
-    }
+	public static final Color[] colors = { new Color(255, 0, 0), new Color(0, 255, 0), new Color(0, 128, 255), new Color(255, 255, 0), };
+	public static final String[] names = { "Salt", "Mercury", "Sulphur", "Lead" };
+	public static final String[] tcolors;
+	public final int[] a;
 
-    public Alchemy(Owner owner, int salt, int merc, int sulf, int lead) {
-	super(owner);
-	this.a = new int[]{salt, merc, sulf, lead};
-    }
-    
-    public BufferedImage longtip() {
-	StringBuilder buf = new StringBuilder();
-	for(int i = 0; i < 4; i++) {
-	    if(i > 0)
-		buf.append(", ");
-	    buf.append(String.format("%s: $col[%s]{%.2f}", names[i], tcolors[i], a[i] / 100.0));
+	static {
+		String[] buf = new String[colors.length];
+		for (int i = 0; i < colors.length; i++)
+			buf[i] = String.format("%d,%d,%d", colors[i].getRed(), colors[i].getGreen(), colors[i].getBlue());
+		tcolors = buf;
 	}
-	buf.append(String.format(" (%d%% pure)", (int)(purity() * 100)));
-	return(RichText.render(buf.toString(), 0).img);
-    }
-    
-    public BufferedImage smallmeter() {
-	int max = 0;
-	for(int i = 0; i < 4; i++)
-	    max = Math.max(a[i], max);
-	BufferedImage buf = TexI.mkbuf(new Coord(max / 200, 12));
-	Graphics g = buf.getGraphics();
-	for(int i = 0; i < 4; i++) {
-	    g.setColor(colors[i]);
-	    g.fillRect(0, i * 3, a[i] / 200, 3);
-	}
-	g.dispose();
-	return(buf);
-    }
 
-    public double purity() {
-	double p = 0.0;
-	for(int e : a)
-	    p += Math.pow(e / 10000.0, 2);
-	return(((p - 0.25) * 4.0) / 3.0);
-    }
-    
-    public String toString() {
-	return(String.format("%d-%d-%d-%d", a[0], a[1], a[2], a[3]));
-    }
+	public enum Element {
+		SALT, MERC, SULF, LEAD
+	}
+
+	public Alchemy(Owner owner, int salt, int merc, int sulf, int lead) {
+		super(owner);
+		this.a = new int[] { salt, merc, sulf, lead };
+	}
+
+	public BufferedImage longtip() {
+		StringBuilder buf = new StringBuilder();
+		for (int i = 0; i < 4; i++) {
+			if (i > 0)
+				buf.append(", ");
+			buf.append(String.format("%s: $col[%s]{%.2f}", names[i], tcolors[i], a[i] / 100.0));
+		}
+		buf.append(String.format(" (%d%% pure)", (int) (purity() * 100)));
+		return (RichText.render(buf.toString(), 0).img);
+	}
+
+	public BufferedImage smallmeter() {
+		int max = 0;
+		for (int i = 0; i < 4; i++)
+			max = Math.max(a[i], max);
+		BufferedImage buf = TexI.mkbuf(new Coord(max / 200, 12));
+		Graphics g = buf.getGraphics();
+		for (int i = 0; i < 4; i++) {
+			g.setColor(colors[i]);
+			g.fillRect(0, i * 3, a[i] / 200, 3);
+		}
+		g.dispose();
+		return (buf);
+	}
+
+	public double purity() {
+		double p = 0.0;
+		for (int e : a)
+			p += Math.pow(e / 10000.0, 2);
+		return (((p - 0.25) * 4.0) / 3.0);
+	}
+
+	public String toString() {
+		return (String.format("%d-%d-%d-%d", a[0], a[1], a[2], a[3]));
+	}
 }

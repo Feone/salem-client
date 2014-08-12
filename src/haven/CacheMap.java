@@ -30,168 +30,183 @@ import java.lang.ref.*;
 import java.util.*;
 
 public class CacheMap<K, V> extends AbstractMap<K, V> {
-    private final Map<K, Reference<V>> back;
-    private final ReferenceQueue<V> cleanq = new ReferenceQueue<V>();
-    private final RefType reftype;
+	private final Map<K, Reference<V>> back;
+	private final ReferenceQueue<V> cleanq = new ReferenceQueue<V>();
+	private final RefType reftype;
 
-    /* Because multiple inheritence would be too good. */
-    interface Ref<K> {
-	K key();
-    }
-
-    static class SRef<K, V> extends SoftReference<V> implements Ref<K> {
-	final K key;
-
-	SRef(K key, V val, ReferenceQueue<V> queue) {
-	    super(val, queue);
-	    this.key = key;
+	/* Because multiple inheritence would be too good. */
+	interface Ref<K> {
+		K key();
 	}
 
-	public K key() {return(this.key);}
-    }
+	static class SRef<K, V> extends SoftReference<V> implements Ref<K> {
+		final K key;
 
-    static class WRef<K, V> extends WeakReference<V> implements Ref<K> {
-	final K key;
-
-	WRef(K key, V val, ReferenceQueue<V> queue) {
-	    super(val, queue);
-	    this.key = key;
-	}
-
-	public K key() {return(this.key);}
-    }
-
-    public static enum RefType {
-	SOFT {
-	    public <K, V> Reference<V> mkref(K k, V v, ReferenceQueue<V> cleanq) {
-		return(new SRef<K, V>(k, v, cleanq));
-	    }
-	}, WEAK {
-	    public <K, V> Reference<V> mkref(K k, V v, ReferenceQueue<V> cleanq) {
-		return(new WRef<K, V>(k, v, cleanq));
-	    }
-	};
-
-	public abstract <K, V> Reference<V> mkref(K k, V v, ReferenceQueue<V> cleanq);
-    }
-
-    public CacheMap(RefType type) {
-	this.reftype = type;
-	this.back = new HashMap<K, Reference<V>>();
-    }
-
-    public CacheMap() {
-	this(RefType.SOFT);
-    }
-
-    public CacheMap(Map<K, V> m) {
-	this();
-	putAll(m);
-    }
-
-    public boolean containsKey(Object k) {
-	return(get(k) != null);
-    }
-
-    private class IteredEntry implements Entry<K, V> {
-	private final K k;
-	private V v;
-
-	private IteredEntry(K k, V v) {
-	    this.k = k; this.v = v;
-	}
-
-	public K getKey()   {return(k);}
-	public V getValue() {return(v);}
-
-	public boolean equals(Object o) {
-	    return((o instanceof CacheMap.IteredEntry) && (((IteredEntry)o).k == k));
-	}
-
-	public int hashCode() {
-	    return(k.hashCode());
-	}
-
-	public V setValue(V nv) {
-	    return(put(k, this.v = nv));
-	}
-    }
-
-    private Set<Entry<K, V>> entries = null;
-    public Set<Entry<K, V>> entrySet() {
-	if(entries == null)
-	    entries = new AbstractSet<Entry<K, V>>() {
-		public int size() {
-		    clean();
-		    return(back.size());
+		SRef(K key, V val, ReferenceQueue<V> queue) {
+			super(val, queue);
+			this.key = key;
 		}
 
-		public Iterator<Entry<K, V>> iterator() {
-		    clean();
-		    final Iterator<Entry<K, Reference<V>>> iter = back.entrySet().iterator();
-		    return(new Iterator<Entry<K, V>>() {
-			    private K nk;
-			    private V nv;
+		public K key() {
+			return (this.key);
+		}
+	}
 
-			    public boolean hasNext() {
-				while(true) {
-				    if(nv != null)
-					return(true);
-				    if(!iter.hasNext())
-					return(false);
-				    Entry<K, Reference<V>> e = iter.next();
-				    K k = e.getKey();
-				    V v = e.getValue().get();
-				    if(v != null) {
-					nk = k; nv = v;
-					return(true);
-				    }
+	static class WRef<K, V> extends WeakReference<V> implements Ref<K> {
+		final K key;
+
+		WRef(K key, V val, ReferenceQueue<V> queue) {
+			super(val, queue);
+			this.key = key;
+		}
+
+		public K key() {
+			return (this.key);
+		}
+	}
+
+	public static enum RefType {
+		SOFT {
+			public <K, V> Reference<V> mkref(K k, V v, ReferenceQueue<V> cleanq) {
+				return (new SRef<K, V>(k, v, cleanq));
+			}
+		},
+		WEAK {
+			public <K, V> Reference<V> mkref(K k, V v, ReferenceQueue<V> cleanq) {
+				return (new WRef<K, V>(k, v, cleanq));
+			}
+		};
+
+		public abstract <K, V> Reference<V> mkref(K k, V v, ReferenceQueue<V> cleanq);
+	}
+
+	public CacheMap(RefType type) {
+		this.reftype = type;
+		this.back = new HashMap<K, Reference<V>>();
+	}
+
+	public CacheMap() {
+		this(RefType.SOFT);
+	}
+
+	public CacheMap(Map<K, V> m) {
+		this();
+		putAll(m);
+	}
+
+	public boolean containsKey(Object k) {
+		return (get(k) != null);
+	}
+
+	private class IteredEntry implements Entry<K, V> {
+		private final K k;
+		private V v;
+
+		private IteredEntry(K k, V v) {
+			this.k = k;
+			this.v = v;
+		}
+
+		public K getKey() {
+			return (k);
+		}
+
+		public V getValue() {
+			return (v);
+		}
+
+		public boolean equals(Object o) {
+			return ((o instanceof CacheMap.IteredEntry) && (((IteredEntry) o).k == k));
+		}
+
+		public int hashCode() {
+			return (k.hashCode());
+		}
+
+		public V setValue(V nv) {
+			return (put(k, this.v = nv));
+		}
+	}
+
+	private Set<Entry<K, V>> entries = null;
+
+	public Set<Entry<K, V>> entrySet() {
+		if (entries == null)
+			entries = new AbstractSet<Entry<K, V>>() {
+				public int size() {
+					clean();
+					return (back.size());
 				}
-			    }
-			    public Entry<K, V> next() {
-				if(!hasNext())
-				    throw(new NoSuchElementException());
-				Entry<K, V> ret = new IteredEntry(nk, nv);
-				nk = null; nv = null;
-				return(ret);
-			    }
 
-			    public void remove() {
-				iter.remove();
-			    }
-			});
-		}
+				public Iterator<Entry<K, V>> iterator() {
+					clean();
+					final Iterator<Entry<K, Reference<V>>> iter = back.entrySet().iterator();
+					return (new Iterator<Entry<K, V>>() {
+						private K nk;
+						private V nv;
 
-		public void clear() {
-		    back.clear();
-		}
-	    };
-	return(entries);
-    }
+						public boolean hasNext() {
+							while (true) {
+								if (nv != null)
+									return (true);
+								if (!iter.hasNext())
+									return (false);
+								Entry<K, Reference<V>> e = iter.next();
+								K k = e.getKey();
+								V v = e.getValue().get();
+								if (v != null) {
+									nk = k;
+									nv = v;
+									return (true);
+								}
+							}
+						}
 
-    private void clean() {
-	Reference<? extends V> ref;
-	while((ref = cleanq.poll()) != null) {
-	    Ref rr = (Ref)ref;
-	    remove(rr.key());
+						public Entry<K, V> next() {
+							if (!hasNext())
+								throw (new NoSuchElementException());
+							Entry<K, V> ret = new IteredEntry(nk, nv);
+							nk = null;
+							nv = null;
+							return (ret);
+						}
+
+						public void remove() {
+							iter.remove();
+						}
+					});
+				}
+
+				public void clear() {
+					back.clear();
+				}
+			};
+		return (entries);
 	}
-    }
 
-    public V get(Object k) {
-	clean();
-	Reference<V> ref = back.get(k);
-	return((ref == null)?null:(ref.get()));
-    }
+	private void clean() {
+		Reference<? extends V> ref;
+		while ((ref = cleanq.poll()) != null) {
+			Ref rr = (Ref) ref;
+			remove(rr.key());
+		}
+	}
 
-    public V put(K k, V v) {
-	clean();
-	Reference<V> old = back.put(k, reftype.mkref(k, v, cleanq));
-	return((old == null)?null:(old.get()));
-    }
+	public V get(Object k) {
+		clean();
+		Reference<V> ref = back.get(k);
+		return ((ref == null) ? null : (ref.get()));
+	}
 
-    public V remove(Object k) {
-	clean();
-	Reference<V> ref = back.remove(k);
-	return((ref == null)?null:(ref.get()));
-    }
+	public V put(K k, V v) {
+		clean();
+		Reference<V> old = back.put(k, reftype.mkref(k, v, cleanq));
+		return ((old == null) ? null : (old.get()));
+	}
+
+	public V remove(Object k) {
+		clean();
+		Reference<V> ref = back.remove(k);
+		return ((ref == null) ? null : (ref.get()));
+	}
 }

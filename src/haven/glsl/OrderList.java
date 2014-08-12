@@ -29,48 +29,52 @@ package haven.glsl;
 import java.util.*;
 
 public class OrderList<E> extends AbstractCollection<E> {
-    private final List<Element> bk = new ArrayList<Element>();
-    private boolean sorted;
+	private final List<Element> bk = new ArrayList<Element>();
+	private boolean sorted;
 
-    class Element implements Comparable<Element> {
-	final E e;
-	final int o;
-	Element(E e, int o) {this.e = e; this.o = o;}
+	class Element implements Comparable<Element> {
+		final E e;
+		final int o;
 
-	public int compareTo(Element b) {
-	    return(this.o - b.o);
+		Element(E e, int o) {
+			this.e = e;
+			this.o = o;
+		}
+
+		public int compareTo(Element b) {
+			return (this.o - b.o);
+		}
 	}
-    }
 
-    public boolean add(E e, int o) {
-	bk.add(new Element(e, o));
-	sorted = false;
-	return(true);
-    }
-
-    public int size() {
-	return(bk.size());
-    }
-
-    public Iterator<E> iterator() {
-	if(!sorted) {
-	    Collections.sort(bk);
-	    sorted = true;
+	public boolean add(E e, int o) {
+		bk.add(new Element(e, o));
+		sorted = false;
+		return (true);
 	}
-	return(new Iterator<E>() {
-		private final Iterator<Element> bi = bk.iterator();
 
-		public boolean hasNext() {
-		    return(bi.hasNext());
-		}
+	public int size() {
+		return (bk.size());
+	}
 
-		public E next() {
-		    return(bi.next().e);
+	public Iterator<E> iterator() {
+		if (!sorted) {
+			Collections.sort(bk);
+			sorted = true;
 		}
+		return (new Iterator<E>() {
+			private final Iterator<Element> bi = bk.iterator();
 
-		public void remove() {
-		    bi.remove();
-		}
-	    });
-    }
+			public boolean hasNext() {
+				return (bi.hasNext());
+			}
+
+			public E next() {
+				return (bi.next().e);
+			}
+
+			public void remove() {
+				bi.remove();
+			}
+		});
+	}
 }

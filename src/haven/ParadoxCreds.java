@@ -29,27 +29,27 @@ package haven;
 import java.io.*;
 
 public class ParadoxCreds extends AuthClient.Credentials {
-    private final String username, password;
-    
-    public ParadoxCreds(String username, String password) {
-	this.username = username;
-	this.password = password;
-    }
-    
-    public String name() {
-	return(username);
-    }
-    
-    public String tryauth(AuthClient cl) throws IOException {
-	Message rpl = cl.cmd("pdx", username, password);
-	String stat = rpl.string();
-	if(stat.equals("ok")) {
-	    String acct = rpl.string();
-	    return(acct);
-	} else if(stat.equals("no")) {
-	    throw(new AuthException("Username or password incorrect"));
-	} else {
-	    throw(new RuntimeException("Unexpected reply `" + stat + "' from auth server"));
+	private final String username, password;
+
+	public ParadoxCreds(String username, String password) {
+		this.username = username;
+		this.password = password;
 	}
-    }
+
+	public String name() {
+		return (username);
+	}
+
+	public String tryauth(AuthClient cl) throws IOException {
+		Message rpl = cl.cmd("pdx", username, password);
+		String stat = rpl.string();
+		if (stat.equals("ok")) {
+			String acct = rpl.string();
+			return (acct);
+		} else if (stat.equals("no")) {
+			throw (new AuthException("Username or password incorrect"));
+		} else {
+			throw (new RuntimeException("Unexpected reply `" + stat + "' from auth server"));
+		}
+	}
 }

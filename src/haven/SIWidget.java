@@ -29,30 +29,30 @@ package haven;
 import java.awt.image.*;
 
 public abstract class SIWidget extends Widget {
-    private Tex surf = null;
+	private Tex surf = null;
 
-    public SIWidget(Coord c, Coord sz, Widget parent) {
-	super(c, sz, parent);
-    }
-
-    protected abstract void draw(BufferedImage buf);
-
-    public BufferedImage draw() {
-	BufferedImage buf = TexI.mkbuf(sz);
-	draw(buf);
-	return(buf);
-    }
-
-    public void draw(GOut g) {
-	if(this.surf == null) {
-	    this.surf = new TexI(draw());
+	public SIWidget(Coord c, Coord sz, Widget parent) {
+		super(c, sz, parent);
 	}
-	g.image(surf, Coord.z);
-    }
 
-    public void redraw() {
-	if(surf != null)
-	    surf.dispose();
-	surf = null;
-    }
+	protected abstract void draw(BufferedImage buf);
+
+	public BufferedImage draw() {
+		BufferedImage buf = TexI.mkbuf(sz);
+		draw(buf);
+		return (buf);
+	}
+
+	public void draw(GOut g) {
+		if (this.surf == null) {
+			this.surf = new TexI(draw());
+		}
+		g.image(surf, Coord.z);
+	}
+
+	public void redraw() {
+		if (surf != null)
+			surf.dispose();
+		surf = null;
+	}
 }

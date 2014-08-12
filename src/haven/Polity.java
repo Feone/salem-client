@@ -30,139 +30,145 @@ import java.awt.Color;
 import java.util.*;
 
 public class Polity extends Window {
-    public final String name;
-    public int auth, acap, adrain;
-    public boolean offline;
-    private final List<Member> memb = new ArrayList<Member>();
-    private final Map<Integer, Member> idmap = new HashMap<Integer, Member>();
-    private MemberList ml;
-    private Widget mw;
-    
-    @RName("pol")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    return(new Polity(c, parent, (String)args[0]));
-	}
-    }
-    
-    public class Member {
-	public final int id;
-	private Text rname = null;
-	
-	private Member(int id) {
-	    this.id = id;
-	}
-    }
-    
-    private class MemberList extends Listbox<Member> {
-	final Text unk = Text.render("???");
-	
-	private MemberList(Coord c, int w, int h, Widget parent) {
-	    super(c, parent, w, h, 20);
-	}
-	
-	public Member listitem(int idx) {return(memb.get(idx));}
-	public int listitems() {return(memb.size());}
+	public final String name;
+	public int auth, acap, adrain;
+	public boolean offline;
+	private final List<Member> memb = new ArrayList<Member>();
+	private final Map<Integer, Member> idmap = new HashMap<Integer, Member>();
+	private MemberList ml;
+	private Widget mw;
 
-	public void drawitem(GOut g, Member m) {
-	    if((mw instanceof MemberWidget) && (((MemberWidget)mw).id == m.id))
-		drawsel(g);
-	    BuddyWnd.Buddy b = getparent(GameUI.class).buddies.find(m.id);
-	    Text rn = (b == null)?unk:(b.rname());
-	    g.aimage(rn.tex(), new Coord(0, 10), 0, 0.5);
-	}
-
-	public void change(Member pm) {
-	    if(pm == null)
-		Polity.this.wdgmsg("sel", (Object)null);
-	    else
-		Polity.this.wdgmsg("sel", pm.id);
-	}
-    }
-    
-    public static abstract class MemberWidget extends Widget {
-	public final int id;
-	
-	public MemberWidget(Coord c, Coord sz, Widget parent, int id) {
-	    super(c, sz, parent);
-	    this.id = id;
-	}
-    }
-
-    public static final Text.Foundry nmf = new Text.Foundry("Serif", 14).aa(true);
-    public static final Text.Foundry membf = new Text.Foundry("Sans", 12);
-
-    public Polity(Coord c, Widget parent, String name) {
-	super(c, new Coord(200, 200), parent, "Town");
-	this.name = name;
-	new Label(new Coord(0, 5), this, name, nmf);
-	new Label(new Coord(0, 45), this, "Members:");
-	ml = new MemberList(new Coord(0, 60), 200, 7, this);
-	pack();
-    }
-    
-    private Tex rauth = null;
-    public void cdraw(GOut g) {
-	if(acap > 0) {
-	    synchronized(this) {
-		g.chcolor(0, 0, 0, 255);
-		g.frect(new Coord(0, 23), new Coord(200, 20));
-		g.chcolor(128, 0, 0, 255);
-		g.frect(new Coord(0, 24), new Coord((200 * auth) / acap, 18));
-		g.chcolor();
-		if(rauth == null) {
-		    Color col = offline?Color.RED:Color.WHITE;
-		    rauth = new TexI(Utils.outline2(Text.render(String.format("%s/%s", auth, acap), col).img, Utils.contrast(col)));
+	@RName("pol")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			return (new Polity(c, parent, (String) args[0]));
 		}
-		g.aimage(rauth, new Coord(100, 33), 0.5, 0.5);
-	    }
 	}
-    }
-    
-    public void uimsg(String msg, Object... args) {
-	if(msg == "auth") {
-	    synchronized(this) {
-		auth = (Integer)args[0];
-		acap = (Integer)args[1];
-		adrain = (Integer)args[2];
-		offline = ((Integer)args[3]) != 0;
-		rauth = null;
-	    }
-	} else if(msg == "add") {
-	    int id = (Integer)args[0];
-	    Member pm = new Member(id);
-	    synchronized(this) {
-		memb.add(pm);
-		idmap.put(id, pm);
-	    }
-	} else if(msg == "rm") {
-	    int id = (Integer)args[0];
-	    synchronized(this) {
-		Member pm = idmap.get(id);
-		memb.remove(pm);
-		idmap.remove(id);
-	    }
-	} else {
-	    super.uimsg(msg, args);
-	}
-    }
-    
-    public Widget makechild(String type, Object[] pargs, Object[] cargs) {
-	if(pargs[0] instanceof String) {
-	    String p = (String)pargs[0];
-	    if(p.equals("m")) {
-		mw = gettype(type).create(new Coord(0, 210), this, cargs);
-		pack();
-		return(mw);
-	    }
-	}
-	return(super.makechild(type, pargs, cargs));
-    }
 
-    public void cdestroy(Widget w) {
-	if(w == mw) {
-	    mw = null;
-	    pack();
+	public class Member {
+		public final int id;
+		private Text rname = null;
+
+		private Member(int id) {
+			this.id = id;
+		}
 	}
-    }
+
+	private class MemberList extends Listbox<Member> {
+		final Text unk = Text.render("???");
+
+		private MemberList(Coord c, int w, int h, Widget parent) {
+			super(c, parent, w, h, 20);
+		}
+
+		public Member listitem(int idx) {
+			return (memb.get(idx));
+		}
+
+		public int listitems() {
+			return (memb.size());
+		}
+
+		public void drawitem(GOut g, Member m) {
+			if ((mw instanceof MemberWidget) && (((MemberWidget) mw).id == m.id))
+				drawsel(g);
+			BuddyWnd.Buddy b = getparent(GameUI.class).buddies.find(m.id);
+			Text rn = (b == null) ? unk : (b.rname());
+			g.aimage(rn.tex(), new Coord(0, 10), 0, 0.5);
+		}
+
+		public void change(Member pm) {
+			if (pm == null)
+				Polity.this.wdgmsg("sel", (Object) null);
+			else
+				Polity.this.wdgmsg("sel", pm.id);
+		}
+	}
+
+	public static abstract class MemberWidget extends Widget {
+		public final int id;
+
+		public MemberWidget(Coord c, Coord sz, Widget parent, int id) {
+			super(c, sz, parent);
+			this.id = id;
+		}
+	}
+
+	public static final Text.Foundry nmf = new Text.Foundry("Serif", 14).aa(true);
+	public static final Text.Foundry membf = new Text.Foundry("Sans", 12);
+
+	public Polity(Coord c, Widget parent, String name) {
+		super(c, new Coord(200, 200), parent, "Town");
+		this.name = name;
+		new Label(new Coord(0, 5), this, name, nmf);
+		new Label(new Coord(0, 45), this, "Members:");
+		ml = new MemberList(new Coord(0, 60), 200, 7, this);
+		pack();
+	}
+
+	private Tex rauth = null;
+
+	public void cdraw(GOut g) {
+		if (acap > 0) {
+			synchronized (this) {
+				g.chcolor(0, 0, 0, 255);
+				g.frect(new Coord(0, 23), new Coord(200, 20));
+				g.chcolor(128, 0, 0, 255);
+				g.frect(new Coord(0, 24), new Coord((200 * auth) / acap, 18));
+				g.chcolor();
+				if (rauth == null) {
+					Color col = offline ? Color.RED : Color.WHITE;
+					rauth = new TexI(Utils.outline2(Text.render(String.format("%s/%s", auth, acap), col).img, Utils.contrast(col)));
+				}
+				g.aimage(rauth, new Coord(100, 33), 0.5, 0.5);
+			}
+		}
+	}
+
+	public void uimsg(String msg, Object... args) {
+		if (msg == "auth") {
+			synchronized (this) {
+				auth = (Integer) args[0];
+				acap = (Integer) args[1];
+				adrain = (Integer) args[2];
+				offline = ((Integer) args[3]) != 0;
+				rauth = null;
+			}
+		} else if (msg == "add") {
+			int id = (Integer) args[0];
+			Member pm = new Member(id);
+			synchronized (this) {
+				memb.add(pm);
+				idmap.put(id, pm);
+			}
+		} else if (msg == "rm") {
+			int id = (Integer) args[0];
+			synchronized (this) {
+				Member pm = idmap.get(id);
+				memb.remove(pm);
+				idmap.remove(id);
+			}
+		} else {
+			super.uimsg(msg, args);
+		}
+	}
+
+	public Widget makechild(String type, Object[] pargs, Object[] cargs) {
+		if (pargs[0] instanceof String) {
+			String p = (String) pargs[0];
+			if (p.equals("m")) {
+				mw = gettype(type).create(new Coord(0, 210), this, cargs);
+				pack();
+				return (mw);
+			}
+		}
+		return (super.makechild(type, pargs, cargs));
+	}
+
+	public void cdestroy(Widget w) {
+		if (w == mw) {
+			mw = null;
+			pack();
+		}
+	}
 }

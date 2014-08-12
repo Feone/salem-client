@@ -29,23 +29,23 @@ package haven.glsl;
 import java.util.*;
 
 public class LFieldRef extends LValue {
-    public final LValue val;
-    public final String el;
+	public final LValue val;
+	public final String el;
 
-    public LFieldRef(LValue val, String el) {
-	this.val = val;
-	this.el = el;
-    }
+	public LFieldRef(LValue val, String el) {
+		this.val = val;
+		this.el = el;
+	}
 
-    public LFieldRef process(Context ctx) {
-	return(new LFieldRef(val.process(ctx), el));
-    }
+	public LFieldRef process(Context ctx) {
+		return (new LFieldRef(val.process(ctx), el));
+	}
 
-    public void output(Output out) {
-	out.write("(");
-	val.output(out);
-	out.write(".");
-	out.write(el);
-	out.write(")");
-    }
+	public void output(Output out) {
+		out.write("(");
+		val.output(out);
+		out.write(".");
+		out.write(el);
+		out.write(")");
+	}
 }

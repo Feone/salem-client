@@ -27,30 +27,30 @@
 package haven.glsl;
 
 public class IVec4Cons extends Expression {
-    public static final IVec4Cons z = new IVec4Cons(IntLiteral.z, IntLiteral.z, IntLiteral.z, IntLiteral.z);
-    public static final IVec4Cons u = new IVec4Cons(IntLiteral.u, IntLiteral.u, IntLiteral.u, IntLiteral.u);
-    public final Expression[] els;
+	public static final IVec4Cons z = new IVec4Cons(IntLiteral.z, IntLiteral.z, IntLiteral.z, IntLiteral.z);
+	public static final IVec4Cons u = new IVec4Cons(IntLiteral.u, IntLiteral.u, IntLiteral.u, IntLiteral.u);
+	public final Expression[] els;
 
-    public IVec4Cons(Expression... els) {
-	if((els.length < 1) || (els.length > 4))
-	    throw(new RuntimeException("Invalid number of arguments for ivec4: " + els.length));
-	this.els = els;
-    }
-
-    public IVec4Cons process(Context ctx) {
-	Expression[] nels = new Expression[els.length];
-	for(int i = 0; i < els.length; i++)
-	    nels[i] = els[i].process(ctx);
-	return(new IVec4Cons(nels));
-    }
-
-    public void output(Output out) {
-	out.write("ivec4(");
-	els[0].output(out);
-	for(int i = 1; i < els.length; i++) {
-	    out.write(", ");
-	    els[i].output(out);
+	public IVec4Cons(Expression... els) {
+		if ((els.length < 1) || (els.length > 4))
+			throw (new RuntimeException("Invalid number of arguments for ivec4: " + els.length));
+		this.els = els;
 	}
-	out.write(")");
-    }
+
+	public IVec4Cons process(Context ctx) {
+		Expression[] nels = new Expression[els.length];
+		for (int i = 0; i < els.length; i++)
+			nels[i] = els[i].process(ctx);
+		return (new IVec4Cons(nels));
+	}
+
+	public void output(Output out) {
+		out.write("ivec4(");
+		els[0].output(out);
+		for (int i = 1; i < els.length; i++) {
+			out.write(", ");
+			els[i].output(out);
+		}
+		out.write(")");
+	}
 }

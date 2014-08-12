@@ -27,5 +27,5 @@
 package haven;
 
 public interface Disposable {
-    public void dispose();
+	public void dispose();
 }

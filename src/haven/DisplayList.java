@@ -29,14 +29,14 @@ package haven;
 import javax.media.opengl.*;
 
 public class DisplayList extends GLObject {
-    public final int id;
-    
-    public DisplayList(GL2 gl) {
-	super(gl);
-	id = gl.glGenLists(1);
-    }
-    
-    protected void delete() {
-	gl.glDeleteLists(id, 1);
-    }
+	public final int id;
+
+	public DisplayList(GL2 gl) {
+		super(gl);
+		id = gl.glGenLists(1);
+	}
+
+	protected void delete() {
+		gl.glDeleteLists(id, 1);
+	}
 }

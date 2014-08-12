@@ -29,7 +29,7 @@ package haven.error;
 import java.io.*;
 
 public class ReportException extends IOException {
-    public ReportException(String message) {
-	super(message);
-    }
+	public ReportException(String message) {
+		super(message);
+	}
 }

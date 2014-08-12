@@ -27,34 +27,35 @@
 package haven;
 
 public class HelpWnd extends Window {
-    public static final RichText.Foundry fnd;
-    public Indir<Resource> res;
-    private Indir<Resource> showing = null;
-    private final RichTextBox text;
-    
-    static {
-	fnd = new RichText.Foundry();
-	fnd.aa = true;
-    }
-    
-    public HelpWnd(Coord c, Widget parent, Indir<Resource> res) {
-	super(c, new Coord(300, 430), parent, "Help");
-	this.res = res;
-	this.text = new RichTextBox(Coord.z, new Coord(300, 400), this, "", fnd);
-	new Button(new Coord(100, 410), 100, this, "Dismiss") {
-	    public void click() {
-		HelpWnd.this.wdgmsg("close");
-	    }
-	};
-    }
-    
-    public void tick(double dt) {
-	super.tick(dt);
-	if(res != showing) {
-	    try {
-		text.settext(res.get().layer(Resource.pagina).text);
-		showing = res;
-	    } catch(Loading e) {}
+	public static final RichText.Foundry fnd;
+	public Indir<Resource> res;
+	private Indir<Resource> showing = null;
+	private final RichTextBox text;
+
+	static {
+		fnd = new RichText.Foundry();
+		fnd.aa = true;
 	}
-    }
+
+	public HelpWnd(Coord c, Widget parent, Indir<Resource> res) {
+		super(c, new Coord(300, 430), parent, "Help");
+		this.res = res;
+		this.text = new RichTextBox(Coord.z, new Coord(300, 400), this, "", fnd);
+		new Button(new Coord(100, 410), 100, this, "Dismiss") {
+			public void click() {
+				HelpWnd.this.wdgmsg("close");
+			}
+		};
+	}
+
+	public void tick(double dt) {
+		super.tick(dt);
+		if (res != showing) {
+			try {
+				text.settext(res.get().layer(Resource.pagina).text);
+				showing = res;
+			} catch (Loading e) {
+			}
+		}
+	}
 }

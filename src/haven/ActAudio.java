@@ -32,163 +32,164 @@ import java.lang.ref.WeakReference;
 import haven.Audio.CS;
 
 public class ActAudio extends GLState.Abstract {
-    public static final GLState.Slot<ActAudio> slot = new GLState.Slot<ActAudio>(GLState.Slot.Type.SYS, ActAudio.class);
-    private final Collection<CS> clips = new ArrayList<CS>();
-    private final Collection<CS> current = new ArrayList<CS>();
-    private final Map<Global, Global> global = new HashMap<Global, Global>();
+	public static final GLState.Slot<ActAudio> slot = new GLState.Slot<ActAudio>(GLState.Slot.Type.SYS, ActAudio.class);
+	private final Collection<CS> clips = new ArrayList<CS>();
+	private final Collection<CS> current = new ArrayList<CS>();
+	private final Map<Global, Global> global = new HashMap<Global, Global>();
 
-    public void prep(Buffer st) {
-	st.put(slot, this);
-    }
-
-    public interface Global {
-	public boolean cycle(ActAudio list);
-    }
-
-    public static class PosClip implements Rendered {
-	private final Audio.DataClip clip;
-	
-	public PosClip(Audio.DataClip clip) {
-	    this.clip = clip;
-	}
-	
-	public void draw(GOut g) {
-	    g.apply();
-	    ActAudio list = g.st.cur(slot);
-	    if(list != null) {
-		Coord3f pos = g.st.mv.mul4(Coord3f.o);
-		double pd = Math.sqrt((pos.x * pos.x) + (pos.y * pos.y));
-		this.clip.vol = Math.min(1.0, 50.0 / pd);
-		list.add(clip);
-	    }
+	public void prep(Buffer st) {
+		st.put(slot, this);
 	}
 
-	public boolean setup(RenderList rl) {
-	    return(true);
-	}
-    }
-
-    public static class Ambience implements Rendered {
-	public final Resource res;
-	public final double bvol;
-	private Glob glob = null;
-
-	public Ambience(Resource res, double bvol) {
-	    if(res.layer(Resource.audio, "amb") == null) {
-		/* This check is mostly just to make sure the resource
-		 * is loaded and doesn't throw Loading exception in
-		 * the setup routine. */
-		throw(new RuntimeException("No ambient clip found in " + res));
-	    }
-	    this.res = res;
-	    this.bvol = bvol;
+	public interface Global {
+		public boolean cycle(ActAudio list);
 	}
 
-	public Ambience(Resource res) {
-	    this(res, res.layer(Resource.audio, "amb").bvol);
-	}
+	public static class PosClip implements Rendered {
+		private final Audio.DataClip clip;
 
-	public static class Glob implements Global {
-	    public final Resource res;
-	    private final Audio.DataClip clip;
-	    private int n;
-	    private double vacc;
-	    private double lastupd = System.currentTimeMillis() / 1000.0;
-	    
-	    public Glob(Resource res) {
-		this.res = res;
-		final Resource.Audio clip = res.layer(Resource.audio, "amb");
-		if(clip == null)
-		    throw(new RuntimeException("No ambient clip found in " + res));
-		this.clip = new Audio.DataClip(new RepeatStream(new RepeatStream.Repeater() {
-			public InputStream cons() {
-			    return(clip.pcmstream());
+		public PosClip(Audio.DataClip clip) {
+			this.clip = clip;
+		}
+
+		public void draw(GOut g) {
+			g.apply();
+			ActAudio list = g.st.cur(slot);
+			if (list != null) {
+				Coord3f pos = g.st.mv.mul4(Coord3f.o);
+				double pd = Math.sqrt((pos.x * pos.x) + (pos.y * pos.y));
+				this.clip.vol = Math.min(1.0, 50.0 / pd);
+				list.add(clip);
 			}
-		    }), 0.0, 1.0);
-	    }
+		}
 
-	    public int hashCode() {
-		return(res.hashCode());
-	    }
-
-	    public boolean equals(Object other) {
-		return((other instanceof Glob) && (((Glob)other).res == this.res));
-	    }
-
-	    public boolean cycle(ActAudio list) {
-		double now = System.currentTimeMillis() / 1000.0;
-		double td = Math.max(now - lastupd, 0.0);
-		if(vacc < clip.vol)
-		    clip.vol = Math.max(clip.vol - (td * 0.5), 0.0);
-		else if(vacc > clip.vol)
-		    clip.vol = Math.min(clip.vol + (td * 0.5), 1.0);
-		if((n == 0) && (clip.vol < 0.005))
-		    return(true);
-		vacc = 0.0;
-		n = 0;
-		lastupd = now;
-		list.add(clip);
-		return(false);
-	    }
-
-	    public void add(double vol) {
-		vacc += vol;
-		n++;
-	    }
+		public boolean setup(RenderList rl) {
+			return (true);
+		}
 	}
 
-	public void draw(GOut g) {
-	    g.apply();
-	    if(glob == null) {
-		ActAudio list = g.st.cur(slot);
-		if(list == null)
-		    return;
-		glob = list.intern(new Glob(res));
-	    }
-	    Coord3f pos = g.st.mv.mul4(Coord3f.o);
-	    double pd = Math.sqrt((pos.x * pos.x) + (pos.y * pos.y));
-	    double svol = Math.min(1.0, 50.0 / pd);
-	    glob.add(svol * bvol);
+	public static class Ambience implements Rendered {
+		public final Resource res;
+		public final double bvol;
+		private Glob glob = null;
+
+		public Ambience(Resource res, double bvol) {
+			if (res.layer(Resource.audio, "amb") == null) {
+				/*
+				 * This check is mostly just to make sure the resource is loaded
+				 * and doesn't throw Loading exception in the setup routine.
+				 */
+				throw (new RuntimeException("No ambient clip found in " + res));
+			}
+			this.res = res;
+			this.bvol = bvol;
+		}
+
+		public Ambience(Resource res) {
+			this(res, res.layer(Resource.audio, "amb").bvol);
+		}
+
+		public static class Glob implements Global {
+			public final Resource res;
+			private final Audio.DataClip clip;
+			private int n;
+			private double vacc;
+			private double lastupd = System.currentTimeMillis() / 1000.0;
+
+			public Glob(Resource res) {
+				this.res = res;
+				final Resource.Audio clip = res.layer(Resource.audio, "amb");
+				if (clip == null)
+					throw (new RuntimeException("No ambient clip found in " + res));
+				this.clip = new Audio.DataClip(new RepeatStream(new RepeatStream.Repeater() {
+					public InputStream cons() {
+						return (clip.pcmstream());
+					}
+				}), 0.0, 1.0);
+			}
+
+			public int hashCode() {
+				return (res.hashCode());
+			}
+
+			public boolean equals(Object other) {
+				return ((other instanceof Glob) && (((Glob) other).res == this.res));
+			}
+
+			public boolean cycle(ActAudio list) {
+				double now = System.currentTimeMillis() / 1000.0;
+				double td = Math.max(now - lastupd, 0.0);
+				if (vacc < clip.vol)
+					clip.vol = Math.max(clip.vol - (td * 0.5), 0.0);
+				else if (vacc > clip.vol)
+					clip.vol = Math.min(clip.vol + (td * 0.5), 1.0);
+				if ((n == 0) && (clip.vol < 0.005))
+					return (true);
+				vacc = 0.0;
+				n = 0;
+				lastupd = now;
+				list.add(clip);
+				return (false);
+			}
+
+			public void add(double vol) {
+				vacc += vol;
+				n++;
+			}
+		}
+
+		public void draw(GOut g) {
+			g.apply();
+			if (glob == null) {
+				ActAudio list = g.st.cur(slot);
+				if (list == null)
+					return;
+				glob = list.intern(new Glob(res));
+			}
+			Coord3f pos = g.st.mv.mul4(Coord3f.o);
+			double pd = Math.sqrt((pos.x * pos.x) + (pos.y * pos.y));
+			double svol = Math.min(1.0, 50.0 / pd);
+			glob.add(svol * bvol);
+		}
+
+		public boolean setup(RenderList rl) {
+			return (true);
+		}
 	}
 
-	public boolean setup(RenderList rl) {
-	    return(true);
+	public void add(CS clip) {
+		clips.add(clip);
 	}
-    }
 
-    public void add(CS clip) {
-	clips.add(clip);
-    }
+	@SuppressWarnings("unchecked")
+	public <T extends Global> T intern(T glob) {
+		T ret = (T) global.get(glob);
+		if (ret == null)
+			global.put(glob, ret = glob);
+		return (ret);
+	}
 
-    @SuppressWarnings("unchecked")
-    public <T extends Global> T intern(T glob) {
-	T ret = (T)global.get(glob);
-	if(ret == null)
-	    global.put(glob, ret = glob);
-	return(ret);
-    }
-    
-    public void cycle() {
-	for(Iterator<Global> i = global.keySet().iterator(); i.hasNext();) {
-	    Global glob = i.next();
-	    if(glob.cycle(this))
-		i.remove();
+	public void cycle() {
+		for (Iterator<Global> i = global.keySet().iterator(); i.hasNext();) {
+			Global glob = i.next();
+			if (glob.cycle(this))
+				i.remove();
+		}
+		for (CS clip : current) {
+			if (!clips.contains(clip))
+				Audio.stop(clip);
+		}
+		for (CS clip : clips) {
+			if (!current.contains(clip))
+				Audio.play(clip);
+		}
+		current.clear();
+		current.addAll(clips);
+		clips.clear();
 	}
-	for(CS clip : current) {
-	    if(!clips.contains(clip))
-		Audio.stop(clip);
+
+	public void clear() {
+		for (CS clip : current)
+			Audio.stop(clip);
 	}
-	for(CS clip : clips) {
-	    if(!current.contains(clip))
-		Audio.play(clip);
-	}
-	current.clear();
-	current.addAll(clips);
-	clips.clear();
-    }
-    
-    public void clear() {
-	for(CS clip : current)
-	    Audio.stop(clip);
-    }
 }

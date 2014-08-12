@@ -29,79 +29,79 @@ package haven;
 import javax.media.opengl.*;
 
 public class Location extends Transform {
-    public Location(Matrix4f xf) {
-	super(xf);
-    }
-    
-    public static class Chain extends GLState {
-	public final Location loc;
-	public final Chain p;
-	private Matrix4f bk;
-
-	private Chain(Location loc, Chain p) {
-	    this.loc = loc;
-	    this.p = p;
+	public Location(Matrix4f xf) {
+		super(xf);
 	}
 
-	public Matrix4f fin(Matrix4f o) {
-	    if(p == null)
-		return(loc.fin(o));
-	    return(loc.fin(p.fin(o)));
+	public static class Chain extends GLState {
+		public final Location loc;
+		public final Chain p;
+		private Matrix4f bk;
+
+		private Chain(Location loc, Chain p) {
+			this.loc = loc;
+			this.p = p;
+		}
+
+		public Matrix4f fin(Matrix4f o) {
+			if (p == null)
+				return (loc.fin(o));
+			return (loc.fin(p.fin(o)));
+		}
+
+		public void apply(GOut g) {
+			bk = g.st.wxf;
+			g.st.wxf = fin(g.st.wxf);
+		}
+
+		public void unapply(GOut g) {
+			g.st.wxf = bk;
+		}
+
+		public void prep(Buffer b) {
+			throw (new RuntimeException("Location chains should not be applied directly."));
+		}
+
+		public String toString() {
+			String ret = loc.toString();
+			if (p != null)
+				ret += " -> " + p;
+			return (ret);
+		}
 	}
 
 	public void apply(GOut g) {
-	    bk = g.st.wxf;
-	    g.st.wxf = fin(g.st.wxf);
+		throw (new RuntimeException("Locations should not be applied directly."));
 	}
 
 	public void unapply(GOut g) {
-	    g.st.wxf = bk;
+		throw (new RuntimeException("Locations should not be applied directly."));
 	}
 
 	public void prep(Buffer b) {
-	    throw(new RuntimeException("Location chains should not be applied directly."));
+		Chain p = b.get(PView.loc);
+		b.put(PView.loc, new Chain(this, p));
 	}
-    
-	public String toString() {
-	    String ret = loc.toString();
-	    if(p != null)
-		ret += " -> " + p;
-	    return(ret);
+
+	public static Location xlate(Coord3f c) {
+		return (new Location(makexlate(new Matrix4f(), c)));
 	}
-    }
 
-    public void apply(GOut g) {
-	throw(new RuntimeException("Locations should not be applied directly."));
-    }
-    
-    public void unapply(GOut g) {
-	throw(new RuntimeException("Locations should not be applied directly."));
-    }
+	public static Location rot(Coord3f axis, float angle) {
+		return (new Location(makerot(new Matrix4f(), axis.norm(), angle)));
+	}
 
-    public void prep(Buffer b) {
-	Chain p = b.get(PView.loc);
-	b.put(PView.loc, new Chain(this, p));
-    }
-    
-    public static Location xlate(Coord3f c) {
-	return(new Location(makexlate(new Matrix4f(), c)));
-    }
-    
-    public static Location rot(Coord3f axis, float angle) {
-	return(new Location(makerot(new Matrix4f(), axis.norm(), angle)));
-    }
+	public static final Location onlyxl = new Location(Matrix4f.id) {
+		private Matrix4f lp = null, fin;
 
-    public static final Location onlyxl = new Location(Matrix4f.id) {
-	    private Matrix4f lp = null, fin;
-
-	    public Matrix4f fin(Matrix4f p) {
-		if(p != lp) {
-		    fin = Matrix4f.identity();
-		    fin.m[12] = p.m[12];
-		    fin.m[13] = p.m[13];
-		    fin.m[14] = p.m[14];
+		public Matrix4f fin(Matrix4f p) {
+			if (p != lp) {
+				fin = Matrix4f.identity();
+				fin.m[12] = p.m[12];
+				fin.m[13] = p.m[13];
+				fin.m[14] = p.m[14];
+			}
+			return (fin);
 		}
-		return(fin);
-	    }
 	};
 }

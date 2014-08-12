@@ -27,5 +27,5 @@
 package haven.glsl;
 
 public interface Macro1<T> {
-    public T expand(T par1);
+	public T expand(T par1);
 }

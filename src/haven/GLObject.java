@@ -31,51 +31,51 @@ import javax.media.opengl.*;
 import static haven.GOut.checkerr;
 
 public abstract class GLObject {
-    private static final Map<GL, Collection<GLObject>> disposed = new HashMap<GL, Collection<GLObject>>();
-    private boolean del;
-    public final GL2 gl;
-    
-    public GLObject(GL2 gl) {
-	this.gl = gl;
-    }
-    
-    public void dispose() {
-	Collection<GLObject> can;
-	synchronized(disposed) {
-	    if(del)
-		return;
-	    del = true;
-	    can = disposed.get(gl);
-	    if(can == null) {
-		can = new LinkedList<GLObject>();
-		disposed.put(gl, can);
-	    }
+	private static final Map<GL, Collection<GLObject>> disposed = new HashMap<GL, Collection<GLObject>>();
+	private boolean del;
+	public final GL2 gl;
+
+	public GLObject(GL2 gl) {
+		this.gl = gl;
 	}
-	synchronized(can) {
-	    can.add(this);
+
+	public void dispose() {
+		Collection<GLObject> can;
+		synchronized (disposed) {
+			if (del)
+				return;
+			del = true;
+			can = disposed.get(gl);
+			if (can == null) {
+				can = new LinkedList<GLObject>();
+				disposed.put(gl, can);
+			}
+		}
+		synchronized (can) {
+			can.add(this);
+		}
 	}
-    }
-    
-    protected void finalize() {
-	dispose();
-    }
-    
-    protected abstract void delete();
-    
-    public static void disposeall(GL2 gl) {
-	Collection<GLObject> can;
-	synchronized(disposed) {
-	    can = disposed.get(gl);
-	    if(can == null)
-		return;
+
+	protected void finalize() {
+		dispose();
 	}
-	Collection<GLObject> copy;
-	synchronized(can) {
-	    copy = new ArrayList<GLObject>(can);
-	    can.clear();
+
+	protected abstract void delete();
+
+	public static void disposeall(GL2 gl) {
+		Collection<GLObject> can;
+		synchronized (disposed) {
+			can = disposed.get(gl);
+			if (can == null)
+				return;
+		}
+		Collection<GLObject> copy;
+		synchronized (can) {
+			copy = new ArrayList<GLObject>(can);
+			can.clear();
+		}
+		for (GLObject obj : copy)
+			obj.delete();
+		checkerr(gl);
 	}
-	for(GLObject obj : copy)
-	    obj.delete();
-	checkerr(gl);
-    }
 }

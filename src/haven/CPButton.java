@@ -32,68 +32,69 @@ import java.awt.Font;
 import java.awt.image.BufferedImage;
 
 public class CPButton extends Button {
-    private static final Resource csfx = Resource.load("sfx/confirm");
-    public Object cptip = null;
-    public boolean s = false;
-    private long fst;
+	private static final Resource csfx = Resource.load("sfx/confirm");
+	public Object cptip = null;
+	public boolean s = false;
+	private long fst;
 
-    @RName("cpbtn")
-    public static class $_ implements Factory {
-	public Widget create(Coord c, Widget parent, Object[] args) {
-	    return(new CPButton(c, (Integer)args[0], parent, (String)args[1]));
+	@RName("cpbtn")
+	public static class $_ implements Factory {
+		public Widget create(Coord c, Widget parent, Object[] args) {
+			return (new CPButton(c, (Integer) args[0], parent, (String) args[1]));
+		}
 	}
-    }
 
-    public CPButton(Coord c, int w, Widget parent, String text) {
-	super(c, w, parent, text);
-    }
-
-    public void cpclick() {
-	wdgmsg("activate");
-    }
-
-    private TexI glowmask = null;
-    public void draw(GOut g) {
-	super.draw(g);
-	if(s) {
-	    if(glowmask == null)
-		glowmask = new TexI(PUtils.glowmask(PUtils.glowmask(draw().getRaster()), 10, new Color(255, 64, 0)));
-	    double ph = (System.currentTimeMillis() - fst) / 1000.0;
-	    g.chcolor(255, 255, 255, (int)(128 * ((Math.cos(ph * Math.PI * 2) * -0.5) + 0.5)));
-	    GOut g2 = g.reclipl(new Coord(-10, -10), g.sz.add(20, 20));
-	    g2.image(glowmask, Coord.z);
+	public CPButton(Coord c, int w, Widget parent, String text) {
+		super(c, w, parent, text);
 	}
-    }
 
-    public void click() {
-	if(!s) {
-	    fst = System.currentTimeMillis();
-	    s = true;
-	    change(text.text, new Color(255, 64, 0));
-	    redraw();
-	    Audio.play(csfx);
-	} else {
-	    if((System.currentTimeMillis() - fst) > 1000) {
-		cpclick();
-		s = false;
-		change(text.text, defcol);
-		redraw();
-	    }
+	public void cpclick() {
+		wdgmsg("activate");
 	}
-    }
 
-    public void mousemove(Coord c) {
-	super.mousemove(c);
-	if(s && !c.isect(Coord.z, sz)) {
-	    s = false;
-	    change(text.text, defcol);
-	    redraw();
+	private TexI glowmask = null;
+
+	public void draw(GOut g) {
+		super.draw(g);
+		if (s) {
+			if (glowmask == null)
+				glowmask = new TexI(PUtils.glowmask(PUtils.glowmask(draw().getRaster()), 10, new Color(255, 64, 0)));
+			double ph = (System.currentTimeMillis() - fst) / 1000.0;
+			g.chcolor(255, 255, 255, (int) (128 * ((Math.cos(ph * Math.PI * 2) * -0.5) + 0.5)));
+			GOut g2 = g.reclipl(new Coord(-10, -10), g.sz.add(20, 20));
+			g2.image(glowmask, Coord.z);
+		}
 	}
-    }
 
-    public Object tooltip(Coord c, Widget prev) {
-	if(s && (cptip != null))
-	    return(cptip);
-	return(super.tooltip(c, prev));
-    }
+	public void click() {
+		if (!s) {
+			fst = System.currentTimeMillis();
+			s = true;
+			change(text.text, new Color(255, 64, 0));
+			redraw();
+			Audio.play(csfx);
+		} else {
+			if ((System.currentTimeMillis() - fst) > 1000) {
+				cpclick();
+				s = false;
+				change(text.text, defcol);
+				redraw();
+			}
+		}
+	}
+
+	public void mousemove(Coord c) {
+		super.mousemove(c);
+		if (s && !c.isect(Coord.z, sz)) {
+			s = false;
+			change(text.text, defcol);
+			redraw();
+		}
+	}
+
+	public Object tooltip(Coord c, Widget prev) {
+		if (s && (cptip != null))
+			return (cptip);
+		return (super.tooltip(c, prev));
+	}
 }

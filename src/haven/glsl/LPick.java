@@ -29,33 +29,33 @@ package haven.glsl;
 import java.util.*;
 
 public class LPick extends LValue {
-    public static final String valid = "xyzwrgbastpq";
-    public final LValue val;
-    public final char[] el;
+	public static final String valid = "xyzwrgbastpq";
+	public final LValue val;
+	public final char[] el;
 
-    public LPick(LValue val, char[] el) {
-	for(char c : el) {
-	    if(valid.indexOf(c) < 0)
-		throw(new IllegalArgumentException("`" + c + "' is not a valid swizzling component"));
+	public LPick(LValue val, char[] el) {
+		for (char c : el) {
+			if (valid.indexOf(c) < 0)
+				throw (new IllegalArgumentException("`" + c + "' is not a valid swizzling component"));
+		}
+		this.val = val;
+		this.el = el;
 	}
-	this.val = val;
-	this.el = el;
-    }
 
-    public LPick(LValue val, String el) {
-	this(val, el.toCharArray());
-    }
+	public LPick(LValue val, String el) {
+		this(val, el.toCharArray());
+	}
 
-    public LPick process(Context ctx) {
-	return(new LPick(val.process(ctx), el));
-    }
+	public LPick process(Context ctx) {
+		return (new LPick(val.process(ctx), el));
+	}
 
-    public void output(Output out) {
-	out.write("(");
-	val.output(out);
-	out.write(".");
-	for(char c : el)
-	    out.write(c);
-	out.write(")");
-    }
+	public void output(Output out) {
+		out.write("(");
+		val.output(out);
+		out.write(".");
+		for (char c : el)
+			out.write(c);
+		out.write(")");
+	}
 }

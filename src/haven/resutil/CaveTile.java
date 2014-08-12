@@ -31,51 +31,48 @@ import haven.*;
 import haven.Resource.Tile;
 
 public class CaveTile extends Tiler {
-    public final Resource.Tileset set;
-    public final int h;
-    public final Material wtex;
-    
-    public CaveTile(int id, Resource.Tileset set, int h, Tex wtex) {
-	super(id);
-	this.set = set;
-	this.h = h;
-	this.wtex = new Material(wtex);
-    }
-    
-    public void lay(MapMesh m, Random rnd, Coord lc, Coord gc) {
-	Tile g = set.ground.pick(rnd);
-	m.new Plane(m.gnd(), lc, 0, g);
-    }
-    
-    private void wall(MeshBuf buf, MapMesh.SPoint s1, MapMesh.SPoint s2, Coord3f nrm) {
-	MeshBuf.Tex ta = buf.layer(MeshBuf.tex);
-	MeshBuf.Vertex v1 = buf.new Vertex(s1.pos, nrm),
-	    v2 = buf.new Vertex(s2.pos, nrm),
-	    v3 = buf.new Vertex(s2.pos.add(0, 0, h), nrm),
-	    v4 = buf.new Vertex(s1.pos.add(0, 0, h), nrm);
-	ta.set(v1, new Coord3f(0, 1, 0));
-	ta.set(v2, new Coord3f(1, 1, 0));
-	ta.set(v3, new Coord3f(1, 0, 0));
-	ta.set(v4, new Coord3f(0, 0, 0));
-	buf.new Face(v1, v3, v4);
-	buf.new Face(v1, v2, v3);
-    }
+	public final Resource.Tileset set;
+	public final int h;
+	public final Material wtex;
 
-    public void trans(MapMesh m, Random rnd, Tiler gt, Coord lc, Coord gc, int z, int bmask, int cmask) {
-	int cid = m.map.gettile(gc);
-	if((cid <= id) || (m.map.tiler(cid) instanceof CaveTile))
-	    return;
-	if(bmask == 0)
-	    return;
-	MeshBuf buf = MapMesh.Models.get(m, wtex);
-	MapMesh.Surface gnd = m.gnd();
-	if((bmask & 1) != 0)
-	    wall(buf, gnd.spoint(lc.add(0, 1)), gnd.spoint(lc), new Coord3f(1, 0, 0));
-	if((bmask & 2) != 0)
-	    wall(buf, gnd.spoint(lc), gnd.spoint(lc.add(1, 0)), new Coord3f(0, -1, 0));
-	if((bmask & 4) != 0)
-	    wall(buf, gnd.spoint(lc.add(1, 0)), gnd.spoint(lc.add(1, 1)), new Coord3f(-1, 0, 0));
-	if((bmask & 8) != 0)
-	    wall(buf, gnd.spoint(lc.add(1, 1)), gnd.spoint(lc.add(0, 1)), new Coord3f(0, 1, 0));
-    }
+	public CaveTile(int id, Resource.Tileset set, int h, Tex wtex) {
+		super(id);
+		this.set = set;
+		this.h = h;
+		this.wtex = new Material(wtex);
+	}
+
+	public void lay(MapMesh m, Random rnd, Coord lc, Coord gc) {
+		Tile g = set.ground.pick(rnd);
+		m.new Plane(m.gnd(), lc, 0, g);
+	}
+
+	private void wall(MeshBuf buf, MapMesh.SPoint s1, MapMesh.SPoint s2, Coord3f nrm) {
+		MeshBuf.Tex ta = buf.layer(MeshBuf.tex);
+		MeshBuf.Vertex v1 = buf.new Vertex(s1.pos, nrm), v2 = buf.new Vertex(s2.pos, nrm), v3 = buf.new Vertex(s2.pos.add(0, 0, h), nrm), v4 = buf.new Vertex(s1.pos.add(0, 0, h), nrm);
+		ta.set(v1, new Coord3f(0, 1, 0));
+		ta.set(v2, new Coord3f(1, 1, 0));
+		ta.set(v3, new Coord3f(1, 0, 0));
+		ta.set(v4, new Coord3f(0, 0, 0));
+		buf.new Face(v1, v3, v4);
+		buf.new Face(v1, v2, v3);
+	}
+
+	public void trans(MapMesh m, Random rnd, Tiler gt, Coord lc, Coord gc, int z, int bmask, int cmask) {
+		int cid = m.map.gettile(gc);
+		if ((cid <= id) || (m.map.tiler(cid) instanceof CaveTile))
+			return;
+		if (bmask == 0)
+			return;
+		MeshBuf buf = MapMesh.Models.get(m, wtex);
+		MapMesh.Surface gnd = m.gnd();
+		if ((bmask & 1) != 0)
+			wall(buf, gnd.spoint(lc.add(0, 1)), gnd.spoint(lc), new Coord3f(1, 0, 0));
+		if ((bmask & 2) != 0)
+			wall(buf, gnd.spoint(lc), gnd.spoint(lc.add(1, 0)), new Coord3f(0, -1, 0));
+		if ((bmask & 4) != 0)
+			wall(buf, gnd.spoint(lc.add(1, 0)), gnd.spoint(lc.add(1, 1)), new Coord3f(-1, 0, 0));
+		if ((bmask & 8) != 0)
+			wall(buf, gnd.spoint(lc.add(1, 1)), gnd.spoint(lc.add(0, 1)), new Coord3f(0, 1, 0));
+	}
 }
