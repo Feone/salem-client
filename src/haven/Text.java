@@ -112,6 +112,11 @@ public class Text {
 			m = tmpl.getFontMetrics();
 		}
 
+		// project alert
+		public Foundry(String font, int psz, int style) {
+			this(new Font(font, style, psz));
+		}
+
 		public Foundry(Font f) {
 			this(f, Color.WHITE);
 		}

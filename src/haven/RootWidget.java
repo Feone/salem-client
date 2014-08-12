@@ -50,6 +50,8 @@ public class RootWidget extends ConsoleHost {
 					new Profwnd(new Coord(100, 100), this, gi.map.prof, "MV prof");
 			} else if (key == ':') {
 				entercmd();
+			} else if ((ev.getKeyCode() == KeyEvent.VK_L) && (ev.isControlDown())) {
+				ui.gui.map.grab(new FlatnessTool(ui.gui.map, new Coord(100, 100), ui.root));
 			} else if (key != 0) {
 				wdgmsg("gk", (int) key);
 			}

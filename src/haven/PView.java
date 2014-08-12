@@ -27,8 +27,11 @@
 package haven;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
-import static haven.GOut.checkerr;
+import javax.imageio.ImageIO;
 import javax.media.opengl.*;
 
 public abstract class PView extends Widget {
@@ -43,6 +46,10 @@ public abstract class PView extends Widget {
 	private final WidgetContext cstate = new WidgetContext();
 	private final WidgetRenderState rstate = new WidgetRenderState();
 	private GLState pstate;
+	private TexI skyboxTex;
+	private Coord skyboxRoot;
+	private boolean skyboxLoaded = false;
+	private boolean drawSkybox = false;
 
 	public static class RenderContext extends GLState.Abstract {
 		private Map<DataID, Object> data = new CacheMap<DataID, Object>(CacheMap.RefType.WEAK);
@@ -257,6 +264,8 @@ public abstract class PView extends Widget {
 			if (curf != null)
 				curf.tick("cls");
 			g.st.time = 0;
+			if (drawSkybox)
+				drawSkybox(rg); // TODO tag
 			rls.render(rg);
 			if (cstate.cur.fb != null)
 				cstate.cur.resolve(g);
@@ -288,5 +297,28 @@ public abstract class PView extends Widget {
 		public boolean setup(RenderList r) {
 			return (false);
 		}
+	}
+
+	private void loadSkybox(GOut g) {
+		try {
+			BufferedImage image = ImageIO.read(new File("C:/Java/skyboxtest6.png"));
+			skyboxTex = new TexI(image);
+			this.skyboxRoot = new Coord(0, 0);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void enableSkybox() {
+		this.drawSkybox = true;
+	}
+
+	private void drawSkybox(GOut g) {
+		if (!skyboxLoaded) {
+			loadSkybox(g);
+			skyboxLoaded = true;
+		}
+		Matrix4f cam = g.st.cam;
+		g.skyboxImage(skyboxTex, skyboxRoot, g.sz, (this.ui.gui.map.camera.angle() / (Math.PI * 2)), (this.ui.gui.map.camera.elev() / (Math.PI * 2)));
 	}
 }

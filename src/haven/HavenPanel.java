@@ -26,12 +26,15 @@
 
 package haven;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Cursor;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.awt.event.*;
 import java.util.*;
+
 import javax.media.opengl.*;
 import javax.media.opengl.awt.*;
 import javax.media.opengl.glu.GLU;
@@ -39,7 +42,7 @@ import javax.media.opengl.glu.GLU;
 public class HavenPanel extends GLCanvas implements Runnable, Console.Directory {
 	UI ui;
 	boolean inited = false, rdr = false;
-	int w, h;
+	public int w, h;
 	long fd = 20, fps = 0;
 	double idle = 0.0;
 	Queue<InputEvent> events = new LinkedList<InputEvent>();
@@ -165,7 +168,7 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
 	}
 
 	public static abstract class OrthoState extends GLState {
-		protected abstract Coord sz();
+		public abstract Coord sz();
 
 		public void apply(GOut g) {
 			GL2 gl = g.gl;
@@ -184,7 +187,7 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
 
 		public static OrthoState fixed(final Coord sz) {
 			return (new OrthoState() {
-				protected Coord sz() {
+				public Coord sz() {
 					return (sz);
 				}
 			});
@@ -292,6 +295,7 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
 		if (curf != null)
 			curf.tick("texrt");
 
+		g.apply();
 		g.state(ostate);
 		g.apply();
 		gl.glClearColor(0, 0, 0, 1);
@@ -301,9 +305,9 @@ public class HavenPanel extends GLCanvas implements Runnable, Console.Directory 
 		synchronized (ui) {
 			ui.draw(g);
 		}
+
 		if (curf != null)
 			curf.tick("draw");
-
 		if (Config.dbtext) {
 			int y = h - 20;
 			FastText.aprintf(g, new Coord(10, y -= 15), 0, 1, "FPS: %d (%d%% idle)", fps, (int) (idle * 100.0));

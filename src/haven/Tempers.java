@@ -26,8 +26,12 @@
 
 package haven;
 
+import haven.RichText.Foundry;
+
 import java.awt.Color;
+import java.awt.font.TextAttribute;
 import java.awt.image.*;
+
 import static haven.PUtils.*;
 
 public class Tempers extends SIWidget {
@@ -45,7 +49,71 @@ public class Tempers extends SIWidget {
 	int[] soft = new int[4], hard = new int[4];
 	int[] lmax = new int[4];
 	public boolean gavail = true;
+	private HumourText humourText;
 	Tex tt = null;
+	Tex blood, phlegm, yellow, black;
+
+	public enum Humour {
+		BLOOD(0, "Blood"), PHLEGM(1, "Phlegm"), YELLOW(2, "Yellow Bile"), BLACK(3, "Black Bile");
+
+		public int id;
+		public String name;
+
+		private Humour(int id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+	}
+
+	public class HumourText {
+		final Foundry foundry;
+		public Coord bloodOffset;
+		public Coord phlegmOffset;
+		public Coord yellowOffset;
+		public Coord blackOffset;
+		private int[][] oldHumours;
+		private Tex[] values;
+		private int softIndex, hardIndex, maxIndex;
+
+		public HumourText() {
+			foundry = new RichText.Foundry(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD, TextAttribute.FOREGROUND, new Color(32, 32, 64), TextAttribute.SIZE, 12);
+			bloodOffset = new Coord(325, 10);
+			phlegmOffset = new Coord(140, 10);
+			yellowOffset = new Coord(140, 33);
+			blackOffset = new Coord(325, 33);
+			softIndex = 0;
+			hardIndex = 1;
+			maxIndex = 2;
+			int[] bloodOld = new int[] { 0, 0, 0 };
+			int[] phlegmOld = new int[] { 0, 0, 0 };
+			int[] yellowOld = new int[] { 0, 0, 0 };
+			int[] blackOld = new int[] { 0, 0, 0 };
+			oldHumours = new int[][] { bloodOld, phlegmOld, yellowOld, blackOld };
+			values = new Tex[4];
+		}
+
+		public Tex getTex(Humour type) {
+			if (isCurrent(type)) {
+				return values[type.id];
+			} else {
+				return getCurrent(type);
+			}
+		}
+
+		private boolean isCurrent(Humour type) {
+			return (soft[type.id] == oldHumours[type.id][softIndex] && hard[type.id] == oldHumours[type.id][hardIndex] && lmax[type.id] == oldHumours[type.id][maxIndex]);
+		}
+
+		private Tex getCurrent(Humour type) {
+			int[] current = new int[] { soft[type.id] / 100, hard[type.id] / 100, lmax[type.id] / 100 };
+			String renderText = (current[0] / 10 + "." + current[0] % 10 + " / " + current[1] / 10 + "." + current[1] % 10 + " / " + current[2] / 10 + "." + current[2] % 10);
+			Tex texture = new TexI(Utils.outline2(foundry.render(renderText).img, new Color(240, 240, 240), false));
+			values[type.id] = texture;
+			oldHumours[type.id] = current;
+			return texture;
+		}
+	}
+
 	Widget gbtn;
 
 	static {
@@ -65,6 +133,7 @@ public class Tempers extends SIWidget {
 
 	public Tempers(Coord c, Widget parent) {
 		super(c, imgsz(bg), parent);
+		this.humourText = new HumourText();
 	}
 
 	private FoodInfo lfood;
@@ -170,6 +239,15 @@ public class Tempers extends SIWidget {
 
 	private WritableRaster lfmeter(FoodInfo food, int t) {
 		return (alphablit(lmeter(fbars[t].getRaster(), soft[t] + food.tempers[t], lmax[t]), lmeter(sbars[t].getRaster(), soft[t], lmax[t]), Coord.z));
+	}
+
+	@Override
+	public void draw(GOut g) {
+		super.draw(g);
+		g.image(humourText.getTex(Humour.BLOOD), humourText.bloodOffset);
+		g.image(humourText.getTex(Humour.PHLEGM), humourText.phlegmOffset);
+		g.image(humourText.getTex(Humour.YELLOW), humourText.yellowOffset);
+		g.image(humourText.getTex(Humour.BLACK), humourText.blackOffset);
 	}
 
 	public void draw(BufferedImage buf) {

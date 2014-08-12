@@ -39,7 +39,7 @@ public class GOut {
 	public final GLContext ctx;
 	private final GOut root;
 	public final GLState.Applier st;
-	private final GLState.Buffer def2d;
+	public final GLState.Buffer def2d;
 
 	protected GOut(GOut o) {
 		this.gl = o.gl;
@@ -175,6 +175,34 @@ public class GOut {
 		st.set(def2d);
 		state(color);
 		tex.crender(this, c.add(tx), ul, this.sz, sz);
+		checkerr();
+	}
+
+	/*
+	 * public void drawFog() { int distance = 700; float[] fogColor = { 0.5f,
+	 * 0.5f, 0.5f, 1.0f }; gl.glEnable(GL2.GL_FOG); gl.glFogi(GL2.GL_FOG_MODE,
+	 * GL2.GL_LINEAR); gl.glFogf(GL2.GL_FOG_DENSITY, 0.35f);
+	 * gl.glFogfv(GL2.GL_FOG_COLOR,fogColor,0); gl.glFogf(GL2.GL_FOG_START,
+	 * distance - 300); gl.glFogf(GL2.GL_FOG_END, distance);
+	 * gl.glHint(GL2.GL_FOG_HINT, GL.GL_DONT_CARE); }
+	 */
+
+	public void skyboxImage(TexI tex, Coord c, Coord sz, double camAngle, double camElev) {
+		if (tex == null)
+			return;
+		st.set(def2d);
+		state(color);
+		camAngle = camAngle * -1;
+		if (camAngle < 0) {
+			camAngle = 1 + camAngle;
+		}
+		camElev = 3 * camElev;
+		int yOffset = (int) (sz.y * camElev);
+		float camHStart = (float) (camAngle - 0.1);
+		float camHEnd = (float) (camAngle + 0.1);
+		float camVStart = (float) ((4 - (4 * camElev)) * camElev);
+		float camVEnd = (float) (1 + (4 - (4 * camElev)) * camElev);
+		tex.renderSkybox(this, c, sz.add(0, -yOffset), camHStart, camVStart, camHEnd, camVEnd);
 		checkerr();
 	}
 
@@ -343,6 +371,51 @@ public class GOut {
 		st.set(def2d);
 		state(s);
 		apply();
+
+		float l = tl + ((tr - tl) * ((float) ult.x) / ((float) sz.x));
+		float t = tt + ((tb - tt) * ((float) ult.y) / ((float) sz.y));
+		float r = tl + ((tr - tl) * ((float) brt.x) / ((float) sz.x));
+		float b = tt + ((tb - tt) * ((float) brt.y) / ((float) sz.y));
+		gl.glBegin(GL2.GL_QUADS);
+		gl.glTexCoord2f(l, b);
+		gl.glVertex2i(ul.x, ul.y);
+		gl.glTexCoord2f(r, b);
+		gl.glVertex2i(br.x, ul.y);
+		gl.glTexCoord2f(r, t);
+		gl.glVertex2i(br.x, br.y);
+		gl.glTexCoord2f(l, t);
+		gl.glVertex2i(ul.x, br.y);
+		gl.glEnd();
+		checkerr();
+	}
+
+	public void skybox(Coord ul, Coord sz, float tl, float tt, float tr, float tb) {
+		ul = tx.add(ul);
+		Coord br = ul.add(sz);
+		Coord ult = new Coord(0, 0);
+		Coord brt = new Coord(sz);
+		if (ul.x < this.ul.x) {
+			ult.x += this.ul.x - ul.x;
+			ul.x = this.ul.x;
+		}
+		if (ul.y < this.ul.y) {
+			ult.y += this.ul.y - ul.y;
+			ul.y = this.ul.y;
+		}
+		if (br.x > this.ul.x + this.sz.x) {
+			brt.x -= br.x - (this.ul.x + this.sz.x);
+			br.x = this.ul.x + this.sz.x;
+		}
+		if (br.y > this.ul.y + this.sz.y) {
+			brt.y -= br.y - (this.ul.y + this.sz.y);
+			br.y = this.ul.y + this.sz.y;
+		}
+		if ((ul.x >= br.x) || (ul.y >= br.y))
+			return;
+
+		// st.set(def2d);
+		// state(s);
+		// apply();
 
 		float l = tl + ((tr - tl) * ((float) ult.x) / ((float) sz.x));
 		float t = tt + ((tb - tt) * ((float) ult.y) / ((float) sz.y));

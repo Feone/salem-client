@@ -331,7 +331,13 @@ public class Resource implements Comparable<Resource>, Prioritized, Serializable
 		{
 			ssl = new SslHelper();
 			try {
-				ssl.trust(ssl.loadX509(Resource.class.getResourceAsStream("ressrv.crt")));
+				ssl.trust(ssl.loadX509(Resource.class.getResourceAsStream("/ressrv.crt"))); // Added
+																							// /
+																							// to
+																							// work
+																							// outside
+																							// of
+																							// jar.
 			} catch (java.security.cert.CertificateException e) {
 				throw (new Error("Invalid built-in certificate", e));
 			} catch (IOException e) {

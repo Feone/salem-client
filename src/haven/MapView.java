@@ -29,27 +29,27 @@ package haven;
 import static haven.MCache.cmaps;
 import static haven.MCache.tilesz;
 import haven.Resource.Tile;
+
 import java.awt.Color;
 import java.util.*;
 import java.lang.reflect.*;
+
 import javax.media.opengl.*;
 
 public class MapView extends PView implements DTarget, Console.Directory {
 	public long plgob = -1;
+	private final int MAX_ZOOM = 500;
 	public Coord cc;
 	private final Glob glob;
 	private int view = 2;
 	private Collection<Delayed> delayed = new LinkedList<Delayed>();
 	private Collection<Delayed> delayed2 = new LinkedList<Delayed>();
 	private Collection<Rendered> extradraw = new LinkedList<Rendered>();
-	public Camera camera = new SOrthoCam();
+	public Camera camera = new FreeCam();
 	private Plob placing = null;
 	private int[] visol = new int[32];
 	private Grabber grab;
 	private static final Map<String, Class<? extends Camera>> camtypes = new HashMap<String, Class<? extends Camera>>();
-	{
-		visol[4] = 1;
-	}
 
 	public interface Delayed {
 		public void run(GOut g);
@@ -99,6 +99,8 @@ public class MapView extends PView implements DTarget, Console.Directory {
 		}
 
 		public abstract float angle();
+
+		public abstract float elev();
 
 		public abstract void tick(double dt);
 	}
@@ -192,6 +194,10 @@ public class MapView extends PView implements DTarget, Console.Directory {
 			return (angl);
 		}
 
+		public float elev() {
+			return elev;
+		}
+
 		private static final float maxang = (float) (Math.PI / 2 - 0.1);
 		private static final float mindist = 50.0f;
 
@@ -215,7 +221,7 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	}
 
 	public class FreeCam extends Camera {
-		private float dist = 50.0f;
+		private float dist = 150.0f;
 		private float elev = (float) Math.PI / 4.0f;
 		private float angl = 0.0f;
 		private Coord dragorig = null;
@@ -229,6 +235,10 @@ public class MapView extends PView implements DTarget, Console.Directory {
 
 		public float angle() {
 			return (angl);
+		}
+
+		public float elev() {
+			return elev;
 		}
 
 		public boolean click(Coord c) {
@@ -250,8 +260,12 @@ public class MapView extends PView implements DTarget, Console.Directory {
 
 		public boolean wheel(Coord c, int amount) {
 			float d = dist + (amount * 5);
-			if (d < 5)
+			if (d < 5) {
 				d = 5;
+			}
+			if (d > MAX_ZOOM) {
+				d = MAX_ZOOM;
+			}
 			dist = d;
 			return (true);
 		}
@@ -285,6 +299,10 @@ public class MapView extends PView implements DTarget, Console.Directory {
 
 		public float angle() {
 			return (angl);
+		}
+
+		public float elev() {
+			return elev;
 		}
 
 		public boolean click(Coord c) {
@@ -372,6 +390,7 @@ public class MapView extends PView implements DTarget, Console.Directory {
 
 	public MapView(Coord c, Coord sz, Widget parent, Coord cc, long plgob) {
 		super(c, sz, parent);
+		super.enableSkybox();
 		glob = ui.sess.glob;
 		this.cc = cc;
 		this.plgob = plgob;
@@ -418,6 +437,8 @@ public class MapView extends PView implements DTarget, Console.Directory {
 		}
 	};
 
+	public static final int WFOL = 18;
+	// public static final Tex wftex = Resource.loadtex("tex/flat"); //TODO
 	private final Rendered mapol = new Rendered() {
 		private final GLState[] mats;
 		{
@@ -429,6 +450,8 @@ public class MapView extends PView implements DTarget, Console.Directory {
 			mats[4] = new Material(new Color(0, 0, 0, 64));
 			mats[16] = new Material(new Color(0, 255, 0, 32));
 			mats[17] = new Material(new Color(255, 255, 0, 32));
+			mats[WFOL] = new Material(new Color(0, 255, 0, 255));// new
+																	// Material(wftex,true);
 		}
 
 		public void draw(GOut g) {
@@ -855,6 +878,7 @@ public class MapView extends PView implements DTarget, Console.Directory {
 		if ((olftimer != 0) && (olftimer < System.currentTimeMillis()))
 			unflashol();
 		try {
+			// g.drawFog();
 			if (camload)
 				throw (new MCache.LoadingMap());
 			undelay(delayed, g);
@@ -1221,5 +1245,19 @@ public class MapView extends PView implements DTarget, Console.Directory {
 
 	public Map<String, Console.Command> findcmds() {
 		return (cmdmap);
+	}
+
+	public void setcam(String cam) {
+		try {
+			Constructor<? extends Camera> constructor;
+			constructor = camtypes.get(cam).getConstructor(MapView.class);
+			camera = Utils.construct(constructor, MapView.this);// constructor.newInstance(this);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -156,4 +156,31 @@ public class Inventory extends Widget implements DTarget {
 			resize(invsz(isz));
 		}
 	}
+
+	public void wdgmsg(Widget sender, String msg, Object... args) {
+		if (msg.equals("transfer-same")) {
+			process(getSame((String) args[0]), "transfer");
+		} else if (msg.equals("drop-same")) {
+			process(getSame((String) args[0]), "drop");
+		} else {
+			super.wdgmsg(sender, msg, args);
+		}
+	}
+
+	private void process(List<GItem> items, String action) {
+		for (GItem item : items) {
+			item.wdgmsg(action, Coord.z);
+		}
+	}
+
+	private List<GItem> getSame(String name) {
+		List<GItem> items = new ArrayList<GItem>();
+		for (Widget wdg = lchild; wdg != null; wdg = wdg.prev) {
+			if (wdg.visible && wdg instanceof WItem) {
+				if (((WItem) wdg).item.resname().equals(name))
+					items.add(((WItem) wdg).item);
+			}
+		}
+		return items;
+	}
 }

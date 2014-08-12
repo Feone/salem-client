@@ -26,21 +26,26 @@
 
 package haven;
 
+import static haven.Window.cbtni;
+
 import java.util.*;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextHitInfo;
 import java.text.*;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.*;
 import java.io.IOException;
 import java.awt.datatransfer.*;
 
 public class ChatUI extends Widget {
-	public static final RichText.Foundry fnd = new RichText.Foundry(new ChatParser(TextAttribute.FAMILY, "SansSerif", TextAttribute.SIZE, 10, TextAttribute.FOREGROUND, Color.BLACK));
-	public static final Text.Foundry qfnd = new Text.Foundry(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 12), new java.awt.Color(192, 255, 192));
+	public static final RichText.Foundry fnd = new RichText.Foundry(new ChatParser(TextAttribute.FAMILY, "SansSerif", TextAttribute.SIZE, 12, TextAttribute.FOREGROUND, Color.BLACK));
+	public static final Text.Foundry qfnd = new Text.Foundry(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 14), new java.awt.Color(192, 255, 192));
 	public static final int selw = 100;
 	public Channel sel = null;
 	private final Selector chansel;
@@ -82,7 +87,7 @@ public class ChatUI extends Widget {
 
 	public static class ChatParser extends RichText.Parser {
 		public static final Pattern urlpat = Pattern.compile("\\b((https?://)|(www\\.[a-z0-9_.-]+\\.[a-z0-9_.-]+))[a-z0-9/_.~#%+?&:*=-]*", Pattern.CASE_INSENSITIVE);
-		public static final Map<? extends Attribute, ?> urlstyle = RichText.fillattrs(TextAttribute.FOREGROUND, new Color(64, 64, 255), TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+		public static final Map<? extends Attribute, ?> urlstyle = RichText.fillattrs(TextAttribute.FOREGROUND, new Color(64, 175, 255), TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
 
 		public ChatParser(Object... args) {
 			super(args);
@@ -127,6 +132,16 @@ public class ChatUI extends Widget {
 	public static abstract class Channel extends Widget {
 		public final List<Message> msgs = new LinkedList<Message>();
 		private final Scrollbar sb;
+		public IButton cbtn;
+		// project alert
+		protected boolean read = true;
+
+		// project alert
+		@Override
+		public void show() {
+			super.show();
+			read = true;
+		}
 
 		public static abstract class Message {
 			public final long time = System.currentTimeMillis();
@@ -142,6 +157,8 @@ public class ChatUI extends Widget {
 			private final Text t;
 
 			public SimpleMessage(String text, Color col, int w) {
+				if (Config.timestamp)
+					text = Utils.timestamp(text);
 				if (col == null)
 					this.t = fnd.render(RichText.Parser.quote(text), w);
 				else
@@ -164,6 +181,9 @@ public class ChatUI extends Widget {
 		public Channel(Coord c, Coord sz, Widget parent) {
 			super(c, sz, parent);
 			sb = new Scrollbar(new Coord(sz.x, 0), ih(), this, 0, -ih());
+			cbtn = new IButton(Coord.z, this, cbtni[0], cbtni[1], cbtni[2]);
+			// cbtn.recthit = true;
+			cbtn.c = new Coord(sz.x - cbtn.sz.x - sb.sz.x - 3, 0);
 		}
 
 		public Channel(Widget parent) {
@@ -196,7 +216,7 @@ public class ChatUI extends Widget {
 		}
 
 		public void draw(GOut g) {
-			g.chcolor(0, 0, 0, 255);
+			g.chcolor(24, 24, 16, 200);
 			g.frect(Coord.z, sz);
 			g.chcolor();
 			int y = 0;
@@ -239,6 +259,8 @@ public class ChatUI extends Widget {
 				if (b)
 					sb.val = sb.max;
 			}
+			if (cbtn != null)
+				cbtn.c = new Coord(sz.x - cbtn.sz.x - (sb != null ? sb.sz.x : 0) - 3, 0);
 		}
 
 		public void notify(Message msg) {
@@ -528,6 +550,14 @@ public class ChatUI extends Widget {
 			}
 		}
 
+		public void wdgmsg(Widget sender, String msg, Object... args) {
+			if (sender == cbtn) {
+				wdgmsg("close");
+			} else {
+				super.wdgmsg(sender, msg, args);
+			}
+		}
+
 		public void uimsg(String name, Object... args) {
 			if (name == "sel") {
 				select();
@@ -667,7 +697,11 @@ public class ChatUI extends Widget {
 				BuddyWnd.Buddy b = getparent(GameUI.class).buddies.find(from);
 				String nm = (b == null) ? "???" : (b.name);
 				if ((r == null) || !nm.equals(cn)) {
-					r = fnd.render(RichText.Parser.quote(String.format("%s: %s", nm, text)), w, TextAttribute.FOREGROUND, col);
+					String msg = RichText.Parser.quote(String.format("%s: %s", nm, text));
+					if (Config.timestamp) {
+						msg = Utils.timestamp(msg);
+					}
+					r = fnd.render(msg, w, TextAttribute.FOREGROUND, col);
 					cn = nm;
 				}
 				return (r);
@@ -702,6 +736,11 @@ public class ChatUI extends Widget {
 		private static Color randcol() {
 			int[] c = { cr.nextInt(256), cr.nextInt(256), cr.nextInt(256) };
 			int mc = Math.max(c[0], Math.max(c[1], c[2]));
+			if (c[2] > c[0]) {
+				int t = c[0];
+				c[0] = c[2];
+				c[2] = t;
+			}
 			for (int i = 0; i < c.length; i++)
 				c[i] = (c[i] * 255) / mc;
 			return (new Color(c[0], c[1], c[2]));
@@ -728,6 +767,9 @@ public class ChatUI extends Widget {
 					if (notify)
 						notify(cmsg);
 				}
+				// project alert
+				if (!visible)
+					read = false;
 			} else {
 				super.uimsg(msg, args);
 			}
@@ -752,7 +794,7 @@ public class ChatUI extends Widget {
 				synchronized (ui.sess.glob.party.memb) {
 					Party.Member pm = ui.sess.glob.party.memb.get((long) gobid);
 					if (pm != null)
-						col = pm.col;
+						col = lighter(pm.col);
 				}
 				if (from == null) {
 					append(new MyMessage(line, iw()));
@@ -761,6 +803,9 @@ public class ChatUI extends Widget {
 					append(cmsg);
 					notify(cmsg);
 				}
+				// project alert
+				if (!visible)
+					read = false;
 			} else {
 				super.uimsg(msg, args);
 			}
@@ -769,16 +814,17 @@ public class ChatUI extends Widget {
 
 	public static class PrivChat extends EntryChannel {
 		private final int other;
+		public static final Color[] gc = new Color[] { new Color(230, 48, 32), new Color(64, 180, 200), };
 
 		public class InMessage extends SimpleMessage {
 			public InMessage(String text, int w) {
-				super(text, new Color(192, 0, 0, 255), w);
+				super(text, PrivChat.gc[0], w);
 			}
 		}
 
 		public class OutMessage extends SimpleMessage {
 			public OutMessage(String text, int w) {
-				super(text, new Color(0, 0, 192, 255), w);
+				super(text, PrivChat.gc[1], w);
 			}
 		}
 
@@ -795,6 +841,9 @@ public class ChatUI extends Widget {
 					Message cmsg = new InMessage(line, iw());
 					append(cmsg);
 					notify(cmsg);
+					// project alert
+					if (!visible)
+						read = false;
 				} else if (t.equals("out")) {
 					append(new OutMessage(line, iw()));
 				}
@@ -854,16 +903,24 @@ public class ChatUI extends Widget {
 	}
 
 	private class Selector extends Widget {
-		public final Text.Foundry nf = new Text.Foundry("SansSerif", 10);
+		public final Text.Foundry nf = new Text.Foundry("SansSerif", 12);
 		private final List<DarkChannel> chls = new ArrayList<DarkChannel>();
 		private int s = 0;
+
+		public boolean rerender = false;
+		public int ymod = 0;
+		// project alert
+		public Text.Foundry nfunread = new Text.Foundry("SansSerif", 14, Font.BOLD);
 
 		private class DarkChannel {
 			public final Channel chan;
 			public Text rname;
+			// project alert
+			public boolean rread;
 
 			private DarkChannel(Channel chan) {
 				this.chan = chan;
+				this.rread = false;
 			}
 		}
 
@@ -900,15 +957,28 @@ public class ChatUI extends Widget {
 						g.frect(new Coord(0, y), new Coord(sz.x, 19));
 					}
 					g.chcolor(255, 255, 255, 255);
-					if ((ch.rname == null) || !ch.rname.text.equals(ch.chan.name()))
-						ch.rname = nf.render(ch.chan.name());
-					g.aimage(ch.rname.tex(), new Coord(sz.x / 2, y + 10), 0.5, 0.5);
-					g.line(new Coord(5, y + 19), new Coord(sz.x - 5, y + 19), 1);
-					y += 20;
+					// project safari
+					if (rerender || (ch.rname == null) || !ch.rname.text.equals(ch.chan.name()) || ch.rread != ch.chan.read) {
+						ch.rread = ch.chan.read;
+						if (ch.rread) {
+							ch.rname = nf.render(ch.chan.name());
+						} else {
+							ch.rname = nfunread.render(ch.chan.name());
+						}
+					}
+
+					if (rerender) {
+						ch.chan.c = new Coord(selw, 0);
+					}
+
+					g.aimage(ch.rname.tex(), new Coord(sz.x / 2, y + 10 + ymod / 2), 0.5, 0.5);
+					g.line(new Coord(5, y + 19 + ymod), new Coord(sz.x - 5, y + 19 + ymod), 1);
+					y += 20 + ymod;
 					if (y >= sz.y)
 						break;
 					i++;
 				}
+				rerender = false;
 			}
 			g.chcolor();
 		}
@@ -1198,5 +1268,14 @@ public class ChatUI extends Widget {
 			}
 		}
 		return (super.globtype(key, ev));
+	}
+
+	private static Color lighter(Color col) {
+		int hsl[] = new int[3];
+		Utils.rgb2hsl(col.getRed(), col.getGreen(), col.getBlue(), hsl);
+		hsl[1] = Math.round(0.7f * hsl[1]);
+		hsl[2] = 100;
+		int rgb[] = Utils.hsl2rgb(hsl);
+		return new Color(rgb[0], rgb[1], rgb[2]);
 	}
 }

@@ -52,12 +52,12 @@ public class Window extends Widget implements DTarget {
 	private static final int th = tleft.sz().y, tdh = th - tmain.sz().y, tc = tdh + 18;
 	private static final Coord capc = new Coord(20, th - 3);
 	public Coord mrgn = new Coord(10, 10);
-	private final Text cap;
+	protected Text cap;
 	private boolean dt = false;
 	private boolean dm = false;
 	public Coord ctl, csz, atl, asz;
-	private Coord doff;
-	private final IButton cbtn;
+	protected Coord doff;
+	protected final IButton cbtn;
 	private final Collection<Widget> twdgs = new LinkedList<Widget>();
 
 	@RName("wnd")

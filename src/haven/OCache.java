@@ -26,6 +26,8 @@
 
 package haven;
 
+import haven.minimap.Radar;
+
 import java.util.*;
 
 public class OCache implements Iterable<Gob> {
@@ -34,6 +36,7 @@ public class OCache implements Iterable<Gob> {
 	private Map<Long, Gob> objs = new TreeMap<Long, Gob>();
 	private Map<Long, Integer> deleted = new TreeMap<Long, Integer>();
 	private Glob glob;
+	public final Radar radar = new Radar();
 
 	public OCache(Glob glob) {
 		this.glob = glob;
@@ -45,6 +48,7 @@ public class OCache implements Iterable<Gob> {
 				Gob old = objs.remove(id);
 				deleted.put(id, frame);
 				old.dispose();
+				radar.remove(id);
 			}
 		}
 	}
@@ -139,6 +143,7 @@ public class OCache implements Iterable<Gob> {
 			d.sdt = sdt;
 		} else if ((d == null) || (d.res != res) || !d.sdt.equals(sdt)) {
 			g.setattr(new ResDrawable(g, res, sdt));
+			radar.add(g, res);
 		}
 	}
 
@@ -177,6 +182,7 @@ public class OCache implements Iterable<Gob> {
 		if ((cmp == null) || !cmp.base.equals(base)) {
 			cmp = new Composite(g, base);
 			g.setattr(cmp);
+			radar.add(g, base);
 		}
 	}
 

@@ -334,7 +334,10 @@ public abstract class GLShader implements java.io.Serializable {
 		}
 
 		public static FragmentShader load(Class<?> base, String name) {
-			InputStream in = base.getResourceAsStream(name);
+			InputStream in = base.getResourceAsStream("/" + name); // Added / to
+																	// work
+																	// outside
+																	// of jar.
 			try {
 				try {
 					return (parse(new InputStreamReader(in, Utils.ascii)));

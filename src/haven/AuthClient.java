@@ -39,7 +39,13 @@ public class AuthClient {
 	static {
 		ssl = new SslHelper();
 		try {
-			ssl.trust(ssl.loadX509(Resource.class.getResourceAsStream("authsrv.crt")));
+			ssl.trust(ssl.loadX509(Resource.class.getResourceAsStream("/authsrv.crt"))); // Added
+																							// /
+																							// to
+																							// work
+																							// outside
+																							// of
+																							// jar.
 		} catch (Exception e) {
 			throw (new RuntimeException(e));
 		}

@@ -28,13 +28,14 @@ package haven;
 
 import java.net.URL;
 import java.io.PrintStream;
+
 import static haven.Utils.getprop;
 
 public class Config {
 	public static String authuser = getprop("haven.authuser", null);
 	public static String authserv = getprop("haven.authserv", null);
-	public static String defserv = getprop("haven.defserv", "127.0.0.1");
-	public static URL resurl = geturl("haven.resurl", "");
+	public static String defserv = getprop("haven.defserv", "game.salemthegame.com");
+	public static URL resurl = geturl("haven.resurl", "http://game.salemthegame.com/res/");
 	public static URL mapurl = geturl("haven.mapurl", "");
 	public static URL screenurl = geturl("haven.screenurl", "");
 	public static URL storeurl = geturl("haven.storeurl", "http://services.paradoxplaza.com/adam/storelette/salem");
@@ -55,6 +56,9 @@ public class Config {
 	public static byte[] authck = null;
 	public static String prefspec = "salem";
 	public static final String confid = "";
+	public static boolean radar_icons = Utils.getprefb("radar_icons", true);
+
+	public static boolean timestamp = true;
 
 	static {
 		String p;

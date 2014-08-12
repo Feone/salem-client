@@ -921,4 +921,8 @@ public class Widget {
 
 		public abstract void ntick(double a);
 	}
+
+	public void setCoord(Coord c) {
+		this.c = c;
+	}
 }

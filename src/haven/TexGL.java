@@ -412,6 +412,26 @@ public abstract class TexGL extends Tex {
 		}
 	}
 
+	public void renderSkybox(GOut g, Coord start, Coord size, float l, float t, float r, float b) {
+		GL2 gl = g.gl;
+		g.st.prep(draw);
+		g.apply();
+		checkerr(gl);
+		if (!disableall) {
+			gl.glBegin(GL2.GL_QUADS);
+			gl.glTexCoord2f(l, t);
+			gl.glVertex3i(start.x, start.y, 0);
+			gl.glTexCoord2f(r, t);
+			gl.glVertex3i(start.x + size.x, start.y, 0);
+			gl.glTexCoord2f(r, b);
+			gl.glVertex3i(start.x + size.x, start.y + size.y, 0);
+			gl.glTexCoord2f(l, b);
+			gl.glVertex3i(start.x, start.y + size.y, 0);
+			gl.glEnd();
+			checkerr(gl);
+		}
+	}
+
 	public void dispose() {
 		synchronized (idmon) {
 			if (t != null) {

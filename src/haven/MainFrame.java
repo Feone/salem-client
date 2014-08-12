@@ -160,7 +160,13 @@ public class MainFrame extends Frame implements Runnable, Console.Directory {
 	private void seticon() {
 		Image icon;
 		try {
-			InputStream data = MainFrame.class.getResourceAsStream("icon.gif");
+			InputStream data = MainFrame.class.getResourceAsStream("/icon.gif"); // Added
+																					// /
+																					// to
+																					// work
+																					// outside
+																					// of
+																					// jar.
 			icon = javax.imageio.ImageIO.read(data);
 			data.close();
 		} catch (IOException e) {
@@ -272,10 +278,22 @@ public class MainFrame extends Frame implements Runnable, Console.Directory {
 		if (!Config.nopreload) {
 			try {
 				InputStream pls;
-				pls = Resource.class.getResourceAsStream("res-preload");
+				pls = Resource.class.getResourceAsStream("/res-preload"); // Added
+																			// /
+																			// to
+																			// work
+																			// outside
+																			// of
+																			// jar.
 				if (pls != null)
 					Resource.loadlist(pls, -5);
-				pls = Resource.class.getResourceAsStream("res-bgload");
+				pls = Resource.class.getResourceAsStream("/res-bgload"); // Added
+																			// /
+																			// to
+																			// work
+																			// outside
+																			// of
+																			// jar.
 				if (pls != null)
 					Resource.loadlist(pls, -10);
 			} catch (IOException e) {

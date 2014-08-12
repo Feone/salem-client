@@ -27,6 +27,7 @@
 package haven;
 
 import java.util.*;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.InputEvent;
@@ -45,6 +46,7 @@ public class UI {
 	public Widget mouseon;
 	public Console cons = new WidgetConsole();
 	private Collection<AfterDraw> afterdraws = new LinkedList<AfterDraw>();
+	public GameUI gui;
 	public final ActAudio audio = new ActAudio();
 
 	{

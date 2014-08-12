@@ -186,15 +186,24 @@ public class OptWnd extends Window {
 		}
 	}
 
+	private void setCamera(String camtype) {
+		MapView mv = ui.gui.map;
+		if (mv != null) {
+			mv.setcam(camtype);
+		}
+	}
+
 	public OptWnd(Coord c, Widget parent) {
 		super(c, Coord.z, parent, "Options");
 		main = new Panel(new Coord(200, 200));
 		Panel video = new VideoPanel(main);
 		Panel audio = new Panel(new Coord(200, 200));
+		Panel camera = new Panel(new Coord(200, 200));
 		int y;
 
 		new PButton(new Coord(0, 0), 200, main, "Video settings", 'v', video);
 		new PButton(new Coord(0, 30), 200, main, "Audio settings", 'a', audio);
+		new PButton(new Coord(0, 60), 200, main, "Camera settings", 'c', camera);
 		new Button(new Coord(0, 120), 200, main, "Switch character") {
 			public void click() {
 				getparent(GameUI.class).act("lo", "cs");
@@ -221,6 +230,23 @@ public class OptWnd extends Window {
 		};
 		new PButton(new Coord(0, 180), 200, audio, "Back", 27, main);
 
+		// Camera panel buttons.
+		new Button(new Coord(0, 0), 200, camera, "Ortho") {
+			public void click() {
+				setCamera("ortho");
+			}
+		};
+		new Button(new Coord(0, 30), 200, camera, "Free") {
+			public void click() {
+				setCamera("sucky"); // Yet, the most popular one.
+			}
+		};
+		new Button(new Coord(0, 60), 200, camera, "Follow") {
+			public void click() {
+				setCamera("follow");
+			}
+		};
+		new PButton(new Coord(0, 180), 200, camera, "Back", 27, main);
 		chpanel(main);
 	}
 

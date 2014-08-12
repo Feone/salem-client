@@ -31,6 +31,7 @@ import java.io.*;
 import java.nio.*;
 import java.net.URL;
 import java.lang.reflect.*;
+import java.text.SimpleDateFormat;
 import java.util.prefs.*;
 import java.util.*;
 import java.awt.Graphics;
@@ -618,6 +619,10 @@ public class Utils {
 	}
 
 	public static BufferedImage outline(BufferedImage img, Color col) {
+		return outline(img, col, false);
+	}
+
+	public static BufferedImage outline(BufferedImage img, Color col, boolean thick) {
 		Coord sz = imgsz(img).add(2, 2);
 		BufferedImage ol = TexI.mkbuf(sz);
 		Object fcol = ol.getColorModel().getDataElements(col.getRGB(), null);
@@ -635,13 +640,21 @@ public class Utils {
 					continue;
 				if (((x > 1) && (y > 0) && (y < sz.y - 1) && (src.getSample(x - 2, y - 1, 3) >= 250)) || ((x > 0) && (y > 1) && (x < sz.x - 1) && (src.getSample(x - 1, y - 2, 3) >= 250)) || ((x < sz.x - 2) && (y > 0) && (y < sz.y - 1) && (src.getSample(x, y - 1, 3) >= 250)) || ((x > 0) && (y < sz.y - 2) && (x < sz.x - 1) && (src.getSample(x - 1, y, 3) >= 250)))
 					dst.setDataElements(x, y, fcol);
+				if (thick) {
+					if (((x > 1) && (y > 1) && (src.getSample(x - 2, y - 2, 3)) >= 250) || ((x < sz.x - 2) && (y < sz.y - 2) && (src.getSample(x, y, 3) >= 250)) || ((x < sz.x - 2) && (y > 1) && (src.getSample(x, y - 2, 3) >= 250)) || ((x > 1) && (y < sz.y - 2) && (src.getSample(x - 2, y, 3) >= 250)))
+						dst.setDataElements(x, y, fcol);
+				}
 			}
 		}
 		return (ol);
 	}
 
 	public static BufferedImage outline2(BufferedImage img, Color col) {
-		BufferedImage ol = outline(img, col);
+		return outline2(img, col, false);
+	}
+
+	public static BufferedImage outline2(BufferedImage img, Color col, boolean thick) {
+		BufferedImage ol = outline(img, col, thick);
 		Graphics g = ol.getGraphics();
 		g.drawImage(img, 1, 1, null);
 		g.dispose();
@@ -968,16 +981,134 @@ public class Utils {
 				System.gc();
 			}
 		});
-		/*
-		 * Console.setscmd("script", new Console.Command() { public void
-		 * run(Console cons, String[] args) throws IOException {
-		 * haven.test.ScriptDebug.start(args[1], Integer.parseInt(args[2]),
-		 * true); } });
-		 */
-		Console.setscmd("cscript", new Console.Command() {
+		Console.setscmd("script", new Console.Command() {
 			public void run(Console cons, String[] args) throws IOException {
-				haven.test.ScriptDebug.connect(args[1], Config.defserv, Integer.parseInt(args[2]));
+				haven.test.ScriptDebug.start(args[1], Integer.parseInt(args[2]), true);
 			}
 		});
+	}
+
+	public static String timestamp() {
+		return new SimpleDateFormat("HH:mm").format(new Date());
+	}
+
+	public static String timestamp(String text) {
+		return String.format("[%s] %s", timestamp(), text);
+	}
+
+	public static void rgb2hsl(int r, int g, int b, int hsl[]) {
+
+		float var_R = (r / 255f);
+		float var_G = (g / 255f);
+		float var_B = (b / 255f);
+
+		float var_Min; // Min. value of RGB
+		float var_Max; // Max. value of RGB
+		float del_Max; // Delta RGB value
+
+		if (var_R > var_G) {
+			var_Min = var_G;
+			var_Max = var_R;
+		} else {
+			var_Min = var_R;
+			var_Max = var_G;
+		}
+
+		if (var_B > var_Max)
+			var_Max = var_B;
+		if (var_B < var_Min)
+			var_Min = var_B;
+
+		del_Max = var_Max - var_Min;
+
+		float H = 0, S, L;
+		L = (var_Max + var_Min) / 2f;
+
+		if (del_Max == 0) {
+			H = 0;
+			S = 0;
+		} // gray
+		else { // Chroma
+			if (L < 0.5)
+				S = del_Max / (var_Max + var_Min);
+			else
+				S = del_Max / (2 - var_Max - var_Min);
+
+			float del_R = (((var_Max - var_R) / 6f) + (del_Max / 2f)) / del_Max;
+			float del_G = (((var_Max - var_G) / 6f) + (del_Max / 2f)) / del_Max;
+			float del_B = (((var_Max - var_B) / 6f) + (del_Max / 2f)) / del_Max;
+
+			if (var_R == var_Max)
+				H = del_B - del_G;
+			else if (var_G == var_Max)
+				H = (1 / 3f) + del_R - del_B;
+			else if (var_B == var_Max)
+				H = (2 / 3f) + del_G - del_R;
+			if (H < 0)
+				H += 1;
+			if (H > 1)
+				H -= 1;
+		}
+		hsl[0] = (int) (360 * H);
+		hsl[1] = (int) (S * 100);
+		hsl[2] = (int) (L * 100);
+	}
+
+	public static int[] hsl2rgb(final int[] hsl) {
+		double h = hsl[0] / 360d;
+		final double s = hsl[1] / 100d;
+		double l = hsl[2] / 100d;
+		double r = 0d;
+		double g = 0d;
+		double b;
+
+		if (s > 0d) {
+			if (h >= 1d) {
+				h = 0d;
+			}
+
+			h = h * 6d;
+			final double f = h - Math.floor(h);
+			final double a = Math.round(l * 255d * (1d - s));
+			b = Math.round(l * 255d * (1d - (s * f)));
+			final double c = Math.round(l * 255d * (1d - (s * (1d - f))));
+			l = Math.round(l * 255d);
+
+			switch ((int) Math.floor(h)) {
+			case 0:
+				r = l;
+				g = c;
+				b = a;
+				break;
+			case 1:
+				r = b;
+				g = l;
+				b = a;
+				break;
+			case 2:
+				r = a;
+				g = l;
+				b = c;
+				break;
+			case 3:
+				r = a;
+				g = b;
+				b = l;
+				break;
+			case 4:
+				r = c;
+				g = a;
+				b = l;
+				break;
+			case 5:
+				r = l;
+				g = a;
+				break;
+			}
+			return new int[] { (int) Math.round(r), (int) Math.round(g), (int) Math.round(b) };
+		}
+
+		l = Math.round(l * 255d);
+		return new int[] { (int) l, (int) l, (int) l };
 	}
 }

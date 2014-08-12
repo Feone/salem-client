@@ -115,10 +115,22 @@ public class HavenApplet extends Applet {
 		if (!Config.nopreload) {
 			try {
 				InputStream pls;
-				pls = Resource.class.getResourceAsStream("res-preload");
+				pls = Resource.class.getResourceAsStream("/res-preload"); // Added
+																			// /
+																			// to
+																			// work
+																			// outside
+																			// of
+																			// jar.
 				if (pls != null)
 					Resource.loadlist(pls, -5);
-				pls = Resource.class.getResourceAsStream("res-bgload");
+				pls = Resource.class.getResourceAsStream("/res-bgload"); // Added
+																			// /
+																			// to
+																			// work
+																			// outside
+																			// of
+																			// jar.
 				if (pls != null)
 					Resource.loadlist(pls, -10);
 			} catch (IOException e) {

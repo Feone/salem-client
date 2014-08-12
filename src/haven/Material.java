@@ -190,6 +190,11 @@ public class Material extends GLState {
 		this(Light.deflight, new Colors());
 	}
 
+	// flatnesstool
+	public Material(Tex tex, boolean bright) {
+		this(Light.deflight, new Colors(defamb, defdif, defspc, bright ? new float[] { 1.0f, 1.0f, 1.0f, 1.0f } : defemi, 0), tex.draw(), tex.clip());
+	}
+
 	public Material(Color amb, Color dif, Color spc, Color emi, float shine) {
 		this(Light.deflight, new Colors(amb, dif, spc, emi, shine));
 	}
